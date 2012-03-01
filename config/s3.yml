@@ -5,7 +5,7 @@ production:
   endpoint:
   secure: true
   private:
-  expires:
+  expires: 
 
 development:
   access_key_id: 
