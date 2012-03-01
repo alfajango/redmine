@@ -4,7 +4,7 @@ production:
   bucket: <%= ENV['S3_BUCKET'] %>
   endpoint:
   secure: true
-  private:
+  private: 
   expires: 
 
 development:
