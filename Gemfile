@@ -14,6 +14,8 @@ gem "actionpack-action_caching"
 gem 'tzinfo-data', platforms: [:mingw, :mswin, :jruby]
 gem "rbpdf", "~> 1.18.2"
 
+gem 'json'
+
 # Optional gem for LDAP authentication
 group :ldap do
   gem "net-ldap", "~> 0.3.1"
