@@ -6,7 +6,7 @@ rescue LoadError
   exit 1
 end
 
-if Gem::Version.new(Bundler::VERSION) < Gem::Version.new("1.0.21")
+if Gem::Version.new(Bundler::VERSION) < Gem::Version.new("1.0.7")
   $stderr.puts "Redmine requires Bundler 1.0.21 (you're using #{Bundler::VERSION}).\nPlease install a newer version with `gem install bundler`."
   exit 1
 end
