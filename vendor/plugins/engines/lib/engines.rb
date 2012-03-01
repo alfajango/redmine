@@ -83,7 +83,7 @@ module Engines
   class << self
     def init(initializer)
       load_extensions
-      Engines::Assets.initialize_base_public_directory
+      #Engines::Assets.initialize_base_public_directory
     end
     
     def logger
