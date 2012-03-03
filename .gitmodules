@@ -7,3 +7,6 @@
 [submodule "public/themes/pixel-cookers"]
 	path = public/themes/pixel-cookers
 	url = git://github.com/pixel-cookers/RedmineThemePixelCookers.git
+[submodule "vendor/plugins/redmine_user_status"]
+	path = vendor/plugins/redmine_user_status
+	url = git://github.com/bthesorceror/redmine_user_status.git
