@@ -28,6 +28,7 @@ gem 'rotp'
 gem 'rqrcode'
 
 gem 'json'
+gem 'tinder'
 
 # Optional gem for LDAP authentication
 group :ldap do

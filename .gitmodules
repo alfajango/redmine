@@ -10,3 +10,6 @@
 [submodule "vendor/plugins/redmine_user_status"]
 	path = vendor/plugins/redmine_user_status
 	url = git://github.com/JangoSteve/redmine_user_status.git
+[submodule "vendor/plugins/redmine-campfire_notifications"]
+	path = vendor/plugins/redmine-campfire_notifications
+	url = git://github.com/kamui/redmine-campfire_notifications.git

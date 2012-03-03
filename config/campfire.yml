@@ -1,0 +1,15 @@
+production:
+  subdomain:    <%= ENV['CAMPFIRE_SUBDOMAIN'] %>
+  token:        <%= ENV['CAMPFIRE_TOKEN'] %>
+  room:         <%= ENV['CAMPFIRE_ROOM'] %>
+  issues:
+    notes:      true
+    more_info:  true
+
+development:
+  subdomain:    #campfire_subdomain
+  token:        #campfire_token
+  room:         #campfire_roomname
+  issues:
+    notes:      true
+    more_info:  true
