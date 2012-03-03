@@ -28,6 +28,7 @@ gem 'tzinfo-data', platforms: [:mingw, :x64_mingw, :mswin, :jruby]
 gem "rbpdf", "~> 1.19.0"
 
 gem 'json'
+gem 'tinder'
 
 # Optional gem for LDAP authentication
 group :ldap do
