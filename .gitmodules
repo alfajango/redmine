@@ -7,6 +7,3 @@
 [submodule "public/themes/pixel-cookers"]
 	path = public/themes/pixel-cookers
 	url = git://github.com/pixel-cookers/RedmineThemePixelCookers.git
-[submodule "vendor/plugins/redmine-campfire_notifications"]
-	path = vendor/plugins/redmine-campfire_notifications
-	url = git://github.com/kamui/redmine-campfire_notifications.git
