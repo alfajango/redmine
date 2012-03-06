@@ -9,4 +9,4 @@
 	url = git://github.com/pixel-cookers/RedmineThemePixelCookers.git
 [submodule "vendor/plugins/redmine_user_status"]
 	path = vendor/plugins/redmine_user_status
-	url = git://github.com/bthesorceror/redmine_user_status.git
+	url = git://github.com/JangoSteve/redmine_user_status.git
