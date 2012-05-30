@@ -10,3 +10,6 @@
 [submodule "vendor/plugins/redmine_user_status"]
 	path = vendor/plugins/redmine_user_status
 	url = git://github.com/bthesorceror/redmine_user_status.git
+[submodule "vendor/plugins/redmine-mention-plugin"]
+	path = vendor/plugins/redmine-mention-plugin
+	url = https://github.com/steply/redmine-mention-plugin.git
