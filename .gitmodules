@@ -13,3 +13,6 @@
 [submodule "vendor/plugins/redmine-mention-plugin"]
 	path = vendor/plugins/redmine-mention-plugin
 	url = https://github.com/steply/redmine-mention-plugin.git
+[submodule "vendor/plugins/redmine_better_gantt_chart"]
+	path = vendor/plugins/redmine_better_gantt_chart
+	url = https://github.com/kulesa/redmine_better_gantt_chart.git
