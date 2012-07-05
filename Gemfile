@@ -30,6 +30,8 @@ gem "rbpdf", "~> 1.19.0"
 gem 'json'
 gem 'tinder'
 
+gem 'airbrake'
+
 # Optional gem for LDAP authentication
 group :ldap do
   gem "net-ldap", "~> 0.12.0"
