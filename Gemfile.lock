@@ -15,6 +15,10 @@ GEM
       activesupport (= 2.3.14)
     activesupport (2.3.14)
     addressable (2.2.7)
+    airbrake (3.1.2)
+      activesupport
+      builder
+    builder (3.0.0)
     coderay (1.0.5)
     database_cleaner (0.8.0)
     edavis10-object_daddy (0.4.3)
@@ -88,6 +92,7 @@ DEPENDENCIES
   activerecord-jdbcmysql-adapter
   activerecord-jdbcpostgresql-adapter
   activerecord-jdbcsqlite3-adapter
+  airbrake
   coderay (~> 1.0.0)
   database_cleaner
   edavis10-object_daddy

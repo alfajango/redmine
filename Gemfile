@@ -11,6 +11,8 @@ gem "awesome_nested_set", "2.1.6"
 gem 'json'
 gem 'tinder'
 
+gem 'airbrake'
+
 # Optional gem for LDAP authentication
 group :ldap do
   gem "net-ldap", "~> 0.3.1"
