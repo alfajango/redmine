@@ -30,6 +30,8 @@ gem 'rqrcode'
 gem 'json'
 gem 'tinder'
 
+gem 'airbrake'
+
 # Optional gem for LDAP authentication
 group :ldap do
   gem 'net-ldap', '~> 0.17.0'
