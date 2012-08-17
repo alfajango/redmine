@@ -16,3 +16,6 @@
 [submodule "vendor/plugins/redmine_better_gantt_chart"]
 	path = vendor/plugins/redmine_better_gantt_chart
 	url = https://github.com/kulesa/redmine_better_gantt_chart.git
+[submodule "vendor/plugins/stuff_to_do_plugin"]
+	path = vendor/plugins/stuff_to_do_plugin
+	url = git://github.com/edavis10/redmine-stuff-to-do-plugin.git
