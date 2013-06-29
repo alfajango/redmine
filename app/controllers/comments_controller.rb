@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2012  Jean-Philippe Lang
+# Copyright (C) 2006-2013  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -22,23 +22,22 @@ class CommentsController < ApplicationController
   before_filter :find_project_from_association
   before_filter :authorize
 
-  verify :method => :post, :only => :create, :render => {:nothing => true, :status => :method_not_allowed }
   def create
     raise Unauthorized unless @news.commentable?
 
-    @comment = Comment.new(params[:comment])
+    @comment = Comment.new
+    @comment.safe_attributes = params[:comment]
     @comment.author = User.current
     if @news.comments << @comment
       flash[:notice] = l(:label_comment_added)
     end
 
-    redirect_to :controller => 'news', :action => 'show', :id => @news
+    redirect_to news_path(@news)
   end
 
-  verify :method => :delete, :only => :destroy, :render => {:nothing => true, :status => :method_not_allowed }
   def destroy
     @news.comments.find(params[:comment_id]).destroy
-    redirect_to :controller => 'news', :action => 'show', :id => @news
+    redirect_to news_path(@news)
   end
 
   private

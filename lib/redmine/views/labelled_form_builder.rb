@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2011  Jean-Philippe Lang
+# Copyright (C) 2006-2013  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -24,14 +24,18 @@ class Redmine::Views::LabelledFormBuilder < ActionView::Helpers::FormBuilder
         %w(date_select)).each do |selector|
     src = <<-END_SRC
     def #{selector}(field, options = {})
-      label_for_field(field, options) + super(field, options.except(:label))
+      label_for_field(field, options) + super(field, options.except(:label)).html_safe
     end
     END_SRC
     class_eval src, __FILE__, __LINE__
   end
 
   def select(field, choices, options = {}, html_options = {})
-    label_for_field(field, options) + super(field, choices, options, html_options.except(:label))
+    label_for_field(field, options) + super(field, choices, options, html_options.except(:label)).html_safe
+  end
+
+  def time_zone_select(field, priority_zones = nil, options = {}, html_options = {})
+        label_for_field(field, options) + super(field, priority_zones, options, html_options.except(:label)).html_safe
   end
 
   # Returns a label tag for the given field
@@ -41,7 +45,7 @@ class Redmine::Views::LabelledFormBuilder < ActionView::Helpers::FormBuilder
       text ||= l(("field_" + field.to_s.gsub(/\_id$/, "")).to_sym)
       text += @template.content_tag("span", " *", :class => "required") if options.delete(:required)
       @template.content_tag("label", text.html_safe,
-                                     :class => (@object && @object.errors[field] ? "error" : nil),
+                                     :class => (@object && @object.errors[field].present? ? "error" : nil),
                                      :for => (@object_name.to_s + "_" + field.to_s))
   end
 end

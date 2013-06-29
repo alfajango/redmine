@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2011  Jean-Philippe Lang
+# Copyright (C) 2006-2013  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -25,7 +25,7 @@ class BoardsController < ApplicationController
   helper :watchers
 
   def index
-    @boards = @project.boards
+    @boards = @project.boards.includes(:project, :last_message => :author).all
     # show the board if there is only one
     if @boards.size == 1
       @board = @boards.first
@@ -37,35 +37,42 @@ class BoardsController < ApplicationController
     respond_to do |format|
       format.html {
         sort_init 'updated_on', 'desc'
-        sort_update	'created_on' => "#{Message.table_name}.created_on",
+        sort_update 'created_on' => "#{Message.table_name}.created_on",
                     'replies' => "#{Message.table_name}.replies_count",
-                    'updated_on' => "#{Message.table_name}.updated_on"
+                    'updated_on' => "COALESCE(last_replies_messages.created_on, #{Message.table_name}.created_on)"
 
         @topic_count = @board.topics.count
-        @topic_pages = Paginator.new self, @topic_count, per_page_option, params['page']
-        @topics =  @board.topics.find :all, :order => ["#{Message.table_name}.sticky DESC", sort_clause].compact.join(', '),
-                                      :include => [:author, {:last_reply => :author}],
-                                      :limit  =>  @topic_pages.items_per_page,
-                                      :offset =>  @topic_pages.current.offset
-        @message = Message.new
+        @topic_pages = Paginator.new @topic_count, per_page_option, params['page']
+        @topics =  @board.topics.
+          reorder("#{Message.table_name}.sticky DESC").
+          includes(:last_reply).
+          limit(@topic_pages.per_page).
+          offset(@topic_pages.offset).
+          order(sort_clause).
+          preload(:author, {:last_reply => :author}).
+          all
+        @message = Message.new(:board => @board)
         render :action => 'show', :layout => !request.xhr?
       }
       format.atom {
-        @messages = @board.messages.find :all, :order => 'created_on DESC',
-                                               :include => [:author, :board],
-                                               :limit => Setting.feeds_limit.to_i
+        @messages = @board.messages.
+          reorder('created_on DESC').
+          includes(:author, :board).
+          limit(Setting.feeds_limit.to_i).
+          all
         render_feed(@messages, :title => "#{@project}: #{@board}")
       }
     end
   end
 
   def new
-    @board = @project.boards.build(params[:board])
+    @board = @project.boards.build
+    @board.safe_attributes = params[:board]
   end
 
-  verify :method => :post, :only => :create, :redirect_to => { :action => :index }
   def create
-    @board = @project.boards.build(params[:board])
+    @board = @project.boards.build
+    @board.safe_attributes = params[:board]
     if @board.save
       flash[:notice] = l(:notice_successful_create)
       redirect_to_settings_in_projects
@@ -77,16 +84,15 @@ class BoardsController < ApplicationController
   def edit
   end
 
-  verify :method => :put, :only => :update, :redirect_to => { :action => :index }
   def update
-    if @board.update_attributes(params[:board])
+    @board.safe_attributes = params[:board]
+    if @board.save
       redirect_to_settings_in_projects
     else
       render :action => 'edit'
     end
   end
 
-  verify :method => :delete, :only => :destroy, :redirect_to => { :action => :index }
   def destroy
     @board.destroy
     redirect_to_settings_in_projects
@@ -94,7 +100,7 @@ class BoardsController < ApplicationController
 
 private
   def redirect_to_settings_in_projects
-    redirect_to :controller => 'projects', :action => 'settings', :id => @project, :tab => 'boards'
+    redirect_to settings_project_path(@project, :tab => 'boards')
   end
 
   def find_board_if_available

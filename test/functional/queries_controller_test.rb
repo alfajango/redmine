@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2011  Jean-Philippe Lang
+# Copyright (C) 2006-2013  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -18,10 +18,16 @@
 require File.expand_path('../../test_helper', __FILE__)
 
 class QueriesControllerTest < ActionController::TestCase
-  fixtures :projects, :users, :members, :member_roles, :roles, :trackers, :issue_statuses, :issue_categories, :enumerations, :issues, :custom_fields, :custom_values, :queries
+  fixtures :projects, :users, :members, :member_roles, :roles, :trackers, :issue_statuses, :issue_categories, :enumerations, :issues, :custom_fields, :custom_values, :queries, :enabled_modules
 
   def setup
     User.current = nil
+  end
+
+  def test_index
+    get :index
+    # HTML response not implemented
+    assert_response 406
   end
 
   def test_new_project_query
@@ -36,6 +42,10 @@ class QueriesControllerTest < ActionController::TestCase
                                                  :name => 'query_is_for_all',
                                                  :checked => nil,
                                                  :disabled => nil }
+    assert_select 'select[name=?]', 'c[]' do
+      assert_select 'option[value=tracker]'
+      assert_select 'option[value=subject]'
+    end
   end
 
   def test_new_global_query
@@ -104,7 +114,7 @@ class QueriesControllerTest < ActionController::TestCase
     assert_redirected_to :controller => 'issues', :action => 'index', :project_id => nil, :query_id => q
     assert !q.is_public?
     assert !q.has_default_columns?
-    assert_equal [:tracker, :subject, :priority, :category], q.columns.collect {|c| c.name}
+    assert_equal [:id, :tracker, :subject, :priority, :category], q.columns.collect {|c| c.name}
     assert q.valid?
   end
 
@@ -140,11 +150,12 @@ class QueriesControllerTest < ActionController::TestCase
 
   def test_create_with_failure
     @request.session[:user_id] = 2
-    assert_no_difference 'Query.count' do
+    assert_no_difference '::Query.count' do
       post :create, :project_id => 'ecookbook', :query => {:name => ''}
     end
     assert_response :success
     assert_template 'new'
+    assert_select 'input[name=?]', 'query[name]'
   end
 
   def test_edit_global_public_query
@@ -267,5 +278,13 @@ class QueriesControllerTest < ActionController::TestCase
     delete :destroy, :id => 1
     assert_redirected_to :controller => 'issues', :action => 'index', :project_id => 'ecookbook', :set_filter => 1, :query_id => nil
     assert_nil Query.find_by_id(1)
+  end
+
+  def test_backslash_should_be_escaped_in_filters
+    @request.session[:user_id] = 2
+    get :new, :subject => 'foo/bar'
+    assert_response :success
+    assert_template 'new'
+    assert_include 'addFilter("subject", "=", ["foo\/bar"]);', response.body
   end
 end

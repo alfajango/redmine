@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2011  Jean-Philippe Lang
+# Copyright (C) 2006-2013  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -16,33 +16,24 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 require File.expand_path('../../test_helper', __FILE__)
-require 'admin_controller'
-
-# Re-raise errors caught by the controller.
-class AdminController; def rescue_action(e) raise e end; end
 
 class AdminControllerTest < ActionController::TestCase
   fixtures :projects, :users, :roles
 
   def setup
-    @controller = AdminController.new
-    @request    = ActionController::TestRequest.new
-    @response   = ActionController::TestResponse.new
     User.current = nil
     @request.session[:user_id] = 1 # admin
   end
 
   def test_index
     get :index
-    assert_no_tag :tag => 'div',
-                  :attributes => { :class => /nodata/ }
+    assert_select 'div.nodata', 0
   end
 
   def test_index_with_no_configuration_data
     delete_configuration_data
     get :index
-    assert_tag :tag => 'div',
-               :attributes => { :class => /nodata/ }
+    assert_select 'div.nodata'
   end
 
   def test_projects
@@ -81,9 +72,23 @@ class AdminControllerTest < ActionController::TestCase
     assert IssueStatus.find_by_name('Nouveau')
   end
 
+  def test_load_default_configuration_data_should_rescue_error
+    delete_configuration_data
+    Redmine::DefaultData::Loader.stubs(:load).raises(Exception.new("Something went wrong"))
+    post :default_configuration, :lang => 'fr'
+    assert_response :redirect
+    assert_not_nil flash[:error]
+    assert_match /Something went wrong/, flash[:error]
+  end
+
   def test_test_email
+    user = User.find(1)
+    user.pref.no_self_notified = '1'
+    user.pref.save!
+    ActionMailer::Base.deliveries.clear
+
     get :test_email
-    assert_redirected_to '/settings/edit?tab=notifications'
+    assert_redirected_to '/settings?tab=notifications'
     mail = ActionMailer::Base.deliveries.last
     assert_not_nil mail
     user = User.find(1)
@@ -91,9 +96,9 @@ class AdminControllerTest < ActionController::TestCase
   end
 
   def test_test_email_failure_should_display_the_error
-    Mailer.stubs(:deliver_test).raises(Exception, 'Some error message')
+    Mailer.stubs(:test_email).raises(Exception, 'Some error message')
     get :test_email
-    assert_redirected_to '/settings/edit?tab=notifications'
+    assert_redirected_to '/settings?tab=notifications'
     assert_match /Some error message/, flash[:error]
   end
 
@@ -121,8 +126,14 @@ class AdminControllerTest < ActionController::TestCase
     assert_response :success
     assert_template 'plugins'
 
-    assert_tag :td, :child => { :tag => 'span', :content => 'Foo plugin' }
-    assert_tag :td, :child => { :tag => 'span', :content => 'Bar' }
+    assert_select 'tr#plugin-foo' do
+      assert_select 'td span.name', :text => 'Foo plugin'
+      assert_select 'td.configure a[href=/settings/plugin/foo]'
+    end
+    assert_select 'tr#plugin-bar' do
+      assert_select 'td span.name', :text => 'Bar'
+      assert_select 'td.configure a', 0
+    end
   end
 
   def test_info
@@ -138,8 +149,7 @@ class AdminControllerTest < ActionController::TestCase
 
     get :index
     assert_response :success
-    assert_tag :a, :attributes => { :href => '/foo/bar' },
-                   :content => 'Test'
+    assert_select 'div#admin-menu a[href=/foo/bar]', :text => 'Test'
 
     Redmine::MenuManager.map :admin_menu do |menu|
       menu.delete :test_admin_menu_plugin_extension

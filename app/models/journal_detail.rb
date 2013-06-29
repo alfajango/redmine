@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2011  Jean-Philippe Lang
+# Copyright (C) 2006-2013  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -27,10 +27,13 @@ class JournalDetail < ActiveRecord::Base
   end
 
   def normalize(v)
-    if v == true
+    case v
+    when true
       "1"
-    elsif v == false
+    when false
       "0"
+    when Date
+      v.strftime("%Y-%m-%d")
     else
       v
     end

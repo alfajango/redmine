@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2011  Jean-Philippe Lang
+# Copyright (C) 2006-2013  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -20,19 +20,43 @@ require "digest/sha1"
 class User < Principal
   include Redmine::SafeAttributes
 
-  # Account statuses
-  STATUS_ANONYMOUS  = 0
-  STATUS_ACTIVE     = 1
-  STATUS_REGISTERED = 2
-  STATUS_LOCKED     = 3
-
   # Different ways of displaying/sorting users
   USER_FORMATS = {
-    :firstname_lastname => {:string => '#{firstname} #{lastname}', :order => %w(firstname lastname id)},
-    :firstname => {:string => '#{firstname}', :order => %w(firstname id)},
-    :lastname_firstname => {:string => '#{lastname} #{firstname}', :order => %w(lastname firstname id)},
-    :lastname_coma_firstname => {:string => '#{lastname}, #{firstname}', :order => %w(lastname firstname id)},
-    :username => {:string => '#{login}', :order => %w(login id)},
+    :firstname_lastname => {
+        :string => '#{firstname} #{lastname}',
+        :order => %w(firstname lastname id),
+        :setting_order => 1
+      },
+    :firstname_lastinitial => {
+        :string => '#{firstname} #{lastname.to_s.chars.first}.',
+        :order => %w(firstname lastname id),
+        :setting_order => 2
+      },
+    :firstname => {
+        :string => '#{firstname}',
+        :order => %w(firstname id),
+        :setting_order => 3
+      },
+    :lastname_firstname => {
+        :string => '#{lastname} #{firstname}',
+        :order => %w(lastname firstname id),
+        :setting_order => 4
+      },
+    :lastname_coma_firstname => {
+        :string => '#{lastname}, #{firstname}',
+        :order => %w(lastname firstname id),
+        :setting_order => 5
+      },
+    :lastname => {
+        :string => '#{lastname}',
+        :order => %w(lastname id),
+        :setting_order => 6
+      },
+    :username => {
+        :string => '#{login}',
+        :order => %w(login id),
+        :setting_order => 7
+      },
   }
 
   MAIL_NOTIFICATION_OPTIONS = [
@@ -52,14 +76,12 @@ class User < Principal
   has_one :api_token, :class_name => 'Token', :conditions => "action='api'"
   belongs_to :auth_source
 
-  # Active non-anonymous users scope
-  named_scope :active, :conditions => "#{User.table_name}.status = #{STATUS_ACTIVE}"
-  named_scope :logged, :conditions => "#{User.table_name}.status <> #{STATUS_ANONYMOUS}"
-  named_scope :status, lambda {|arg| arg.blank? ? {} : {:conditions => {:status => arg.to_i}} }
+  scope :logged, lambda { where("#{User.table_name}.status <> #{STATUS_ANONYMOUS}") }
+  scope :status, lambda {|arg| where(arg.blank? ? nil : {:status => arg.to_i}) }
 
   acts_as_customizable
 
-  attr_accessor :password, :password_confirmation
+  attr_accessor :password, :password_confirmation, :generate_password
   attr_accessor :last_before_login_on
   # Prevents unauthorized assignments
   attr_protected :login, :admin, :password, :password_confirmation, :hashed_password
@@ -68,30 +90,32 @@ class User < Principal
   MAIL_LENGTH_LIMIT = 60
 
   validates_presence_of :login, :firstname, :lastname, :mail, :if => Proc.new { |user| !user.is_a?(AnonymousUser) }
-  validates_uniqueness_of :login, :if => Proc.new { |user| !user.login.blank? }, :case_sensitive => false
-  validates_uniqueness_of :mail, :if => Proc.new { |user| !user.mail.blank? }, :case_sensitive => false
-  # Login must contain lettres, numbers, underscores only
-  validates_format_of :login, :with => /^[a-z0-9_\-@\.]*$/i
+  validates_uniqueness_of :login, :if => Proc.new { |user| user.login_changed? && user.login.present? }, :case_sensitive => false
+  validates_uniqueness_of :mail, :if => Proc.new { |user| user.mail_changed? && user.mail.present? }, :case_sensitive => false
+  # Login must contain letters, numbers, underscores only
+  validates_format_of :login, :with => /\A[a-z0-9_\-@\.]*\z/i
   validates_length_of :login, :maximum => LOGIN_LENGTH_LIMIT
   validates_length_of :firstname, :lastname, :maximum => 30
-  validates_format_of :mail, :with => /^([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})$/i, :allow_blank => true
+  validates_format_of :mail, :with => /\A([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})\z/i, :allow_blank => true
   validates_length_of :mail, :maximum => MAIL_LENGTH_LIMIT, :allow_nil => true
   validates_confirmation_of :password, :allow_nil => true
   validates_inclusion_of :mail_notification, :in => MAIL_NOTIFICATION_OPTIONS.collect(&:first), :allow_blank => true
   validate :validate_password_length
 
   before_create :set_mail_notification
-  before_save   :update_hashed_password
+  before_save   :generate_password_if_needed, :update_hashed_password
   before_destroy :remove_references_before_destroy
+  after_save :update_notified_project_ids
 
-  named_scope :in_group, lambda {|group|
+  scope :in_group, lambda {|group|
     group_id = group.is_a?(Group) ? group.id : group.to_i
-    { :conditions => ["#{User.table_name}.id IN (SELECT gu.user_id FROM #{table_name_prefix}groups_users#{table_name_suffix} gu WHERE gu.group_id = ?)", group_id] }
+    where("#{User.table_name}.id IN (SELECT gu.user_id FROM #{table_name_prefix}groups_users#{table_name_suffix} gu WHERE gu.group_id = ?)", group_id)
   }
-  named_scope :not_in_group, lambda {|group|
+  scope :not_in_group, lambda {|group|
     group_id = group.is_a?(Group) ? group.id : group.to_i
-    { :conditions => ["#{User.table_name}.id NOT IN (SELECT gu.user_id FROM #{table_name_prefix}groups_users#{table_name_suffix} gu WHERE gu.group_id = ?)", group_id] }
+    where("#{User.table_name}.id NOT IN (SELECT gu.user_id FROM #{table_name_prefix}groups_users#{table_name_suffix} gu WHERE gu.group_id = ?)", group_id)
   }
+  scope :sorted, lambda { order(*User.fields_for_order_statement)}
 
   def set_mail_notification
     self.mail_notification = Setting.default_notification_option if self.mail_notification.blank?
@@ -105,10 +129,15 @@ class User < Principal
     end
   end
 
+  alias :base_reload :reload
   def reload(*args)
     @name = nil
     @projects_by_role = nil
-    super
+    @membership_by_project_id = nil
+    @notified_projects_ids = nil
+    @notified_projects_ids_changed = false
+    @builtin_role = nil
+    base_reload(*args)
   end
 
   def mail=(arg)
@@ -122,27 +151,24 @@ class User < Principal
       begin
         write_attribute(:identity_url, OpenIdAuthentication.normalize_identifier(url))
       rescue OpenIdAuthentication::InvalidOpenId
-        # Invlaid url, don't save
+        # Invalid url, don't save
       end
     end
     self.read_attribute(:identity_url)
   end
 
   # Returns the user that matches provided login and password, or nil
-  def self.try_to_login(login, password)
-    # Make sure no one can sign in with an empty password
-    return nil if password.to_s.empty?
+  def self.try_to_login(login, password, active_only=true)
+    login = login.to_s
+    password = password.to_s
+
+    # Make sure no one can sign in with an empty login or password
+    return nil if login.empty? || password.empty?
     user = find_by_login(login)
     if user
       # user is already in local database
-      return nil if !user.active?
-      if user.auth_source
-        # user has an external authentication method
-        return nil unless user.auth_source.authenticate(login, password)
-      else
-        # authentication with local password
-        return nil unless user.check_password?(password)
-      end
+      return nil unless user.check_password?(password)
+      return nil if !user.active? && active_only
     else
       # user is not yet registered, try to authenticate with available sources
       attrs = AuthSource.authenticate(login, password)
@@ -156,7 +182,7 @@ class User < Principal
         end
       end
     end
-    user.update_attribute(:last_login_on, Time.now) if user && !user.new_record?
+    user.update_column(:last_login_on, Time.now) if user && !user.new_record? && user.active?
     user
   rescue => text
     raise text
@@ -164,14 +190,10 @@ class User < Principal
 
   # Returns the user who matches the given autologin +key+ or nil
   def self.try_to_autologin(key)
-    tokens = Token.find_all_by_action_and_value('autologin', key)
-    # Make sure there's only 1 token that matches the key
-    if tokens.size == 1
-      token = tokens.first
-      if (token.created_on > Setting.autologin.to_i.day.ago) && token.user && token.user.active?
-        token.user.update_attribute(:last_login_on, Time.now)
-        token.user
-      end
+    user = Token.find_active_user('autologin', key, Setting.autologin.to_i)
+    if user
+      user.update_column(:last_login_on, Time.now)
+      user
     end
   end
 
@@ -258,13 +280,16 @@ class User < Principal
     return auth_source.allow_password_changes?
   end
 
-  # Generate and set a random password.  Useful for automated user creation
-  # Based on Token#generate_token_value
-  #
-  def random_password
+  def generate_password?
+    generate_password == '1' || generate_password == true
+  end
+
+  # Generate and set a random password on given length
+  def random_password(length=40)
     chars = ("a".."z").to_a + ("A".."Z").to_a + ("0".."9").to_a
+    chars -= %w(0 O 1 l)
     password = ''
-    40.times { |i| password << chars[rand(chars.size-1)] }
+    length.times {|i| password << chars[SecureRandom.random_number(chars.size)] }
     self.password = password
     self.password_confirmation = password
     self
@@ -284,14 +309,18 @@ class User < Principal
 
   # Return user's RSS key (a 40 chars long string), used to access feeds
   def rss_key
-    token = self.rss_token || Token.create(:user => self, :action => 'feeds')
-    token.value
+    if rss_token.nil?
+      create_rss_token(:action => 'feeds')
+    end
+    rss_token.value
   end
 
   # Return user's API key (a 40 chars long string), used to access the API
   def api_key
-    token = self.api_token || self.create_api_token(:action => 'api')
-    token.value
+    if api_token.nil?
+      create_api_token(:action => 'api')
+    end
+    api_token.value
   end
 
   # Return an array of project ids for which the user has explicitly turned mail notifications on
@@ -300,11 +329,19 @@ class User < Principal
   end
 
   def notified_project_ids=(ids)
-    Member.update_all("mail_notification = #{connection.quoted_false}", ['user_id = ?', id])
-    Member.update_all("mail_notification = #{connection.quoted_true}", ['user_id = ? AND project_id IN (?)', id, ids]) if ids && !ids.empty?
-    @notified_projects_ids = nil
-    notified_projects_ids
+    @notified_projects_ids_changed = true
+    @notified_projects_ids = ids
   end
+
+  # Updates per project notifications (after_save callback)
+  def update_notified_project_ids
+    if @notified_projects_ids_changed
+      ids = (mail_notification == 'selected' ? Array.wrap(notified_projects_ids).reject(&:blank?) : [])
+      members.update_all(:mail_notification => false)
+      members.where(:project_id => ids).update_all(:mail_notification => true) if ids.any?
+    end
+  end
+  private :update_notified_project_ids
 
   def valid_notification_options
     self.class.valid_notification_options(self)
@@ -324,32 +361,49 @@ class User < Principal
   # Find a user account by matching the exact login and then a case-insensitive
   # version.  Exact matches will be given priority.
   def self.find_by_login(login)
-    # First look for an exact match
-    user = all(:conditions => {:login => login}).detect {|u| u.login == login}
-    unless user
-      # Fail over to case-insensitive if none was found
-      user = first(:conditions => ["LOWER(login) = ?", login.to_s.downcase])
+    if login.present?
+      login = login.to_s
+      # First look for an exact match
+      user = where(:login => login).all.detect {|u| u.login == login}
+      unless user
+        # Fail over to case-insensitive if none was found
+        user = where("LOWER(login) = ?", login.downcase).first
+      end
+      user
     end
-    user
   end
 
   def self.find_by_rss_key(key)
-    token = Token.find_by_value(key)
-    token && token.user.active? ? token.user : nil
+    Token.find_active_user('feeds', key)
   end
 
   def self.find_by_api_key(key)
-    token = Token.find_by_action_and_value('api', key)
-    token && token.user.active? ? token.user : nil
+    Token.find_active_user('api', key)
   end
 
   # Makes find_by_mail case-insensitive
   def self.find_by_mail(mail)
-    find(:first, :conditions => ["LOWER(mail) = ?", mail.to_s.downcase])
+    where("LOWER(mail) = ?", mail.to_s.downcase).first
+  end
+
+  # Returns true if the default admin account can no longer be used
+  def self.default_admin_account_changed?
+    !User.active.find_by_login("admin").try(:check_password?, "admin")
   end
 
   def to_s
     name
+  end
+
+  CSS_CLASS_BY_STATUS = {
+    STATUS_ANONYMOUS  => 'anon',
+    STATUS_ACTIVE     => 'active',
+    STATUS_REGISTERED => 'registered',
+    STATUS_LOCKED     => 'locked'
+  }
+
+  def css_classes
+    "user #{CSS_CLASS_BY_STATUS[status]}"
   end
 
   # Returns the current day according to user's time zone
@@ -361,6 +415,15 @@ class User < Principal
     end
   end
 
+  # Returns the day of +time+ according to user's time zone
+  def time_to_date(time)
+    if time_zone.nil?
+      time.to_date
+    else
+      time.in_time_zone(time_zone).to_date
+    end
+  end
+
   def logged?
     true
   end
@@ -369,40 +432,51 @@ class User < Principal
     !logged?
   end
 
+  # Returns user's membership for the given project
+  # or nil if the user is not a member of project
+  def membership(project)
+    project_id = project.is_a?(Project) ? project.id : project
+
+    @membership_by_project_id ||= Hash.new {|h, project_id|
+      h[project_id] = memberships.where(:project_id => project_id).first
+    }
+    @membership_by_project_id[project_id]
+  end
+
+  # Returns the user's bult-in role
+  def builtin_role
+    @builtin_role ||= Role.non_member
+  end
+
   # Return user's roles for project
   def roles_for_project(project)
     roles = []
     # No role on archived projects
-    return roles unless project && project.active?
-    if logged?
-      # Find project membership
-      membership = memberships.detect {|m| m.project_id == project.id}
-      if membership
-        roles = membership.roles
-      else
-        @role_non_member ||= Role.non_member
-        roles << @role_non_member
-      end
+    return roles if project.nil? || project.archived?
+    if membership = membership(project)
+      roles = membership.roles
     else
-      @role_anonymous ||= Role.anonymous
-      roles << @role_anonymous
+      roles << builtin_role
     end
     roles
   end
 
   # Return true if the user is a member of project
   def member_of?(project)
-    !roles_for_project(project).detect {|role| role.member?}.nil?
+    projects.to_a.include?(project)
   end
 
   # Returns a hash of user's projects grouped by roles
   def projects_by_role
     return @projects_by_role if @projects_by_role
 
-    @projects_by_role = Hash.new {|h,k| h[k]=[]}
+    @projects_by_role = Hash.new([])
     memberships.each do |membership|
-      membership.roles.each do |role|
-        @projects_by_role[role] << membership.project if membership.project
+      if membership.project
+        membership.roles.each do |role|
+          @projects_by_role[role] = [] unless @projects_by_role.key?(role)
+          @projects_by_role[role] << membership.project
+        end
       end
     end
     @projects_by_role.each do |role, projects|
@@ -434,26 +508,23 @@ class User < Principal
   #   or falls back to Non Member / Anonymous permissions depending if the user is logged
   def allowed_to?(action, context, options={}, &block)
     if context && context.is_a?(Project)
-      # No action allowed on archived projects
-      return false unless context.active?
-      # No action allowed on disabled modules
       return false unless context.allows_to?(action)
       # Admin users are authorized for anything else
       return true if admin?
 
       roles = roles_for_project(context)
       return false unless roles
-      roles.detect {|role|
+      roles.any? {|role|
         (context.is_public? || role.member?) &&
         role.allowed_to?(action) &&
         (block_given? ? yield(role, self) : true)
       }
     elsif context && context.is_a?(Array)
-      # Authorize if user is authorized on every element of the array
-      context.map do |project|
-        allowed_to?(action, project, options, &block)
-      end.inject do |memo,allowed|
-        memo && allowed
+      if context.empty?
+        false
+      else
+        # Authorize if user is authorized on every element of the array
+        context.map {|project| allowed_to?(action, project, options, &block)}.reduce(:&)
       end
     elsif options[:global]
       # Admin users are always authorized
@@ -462,7 +533,7 @@ class User < Principal
       # authorize if user has at least one role that has this permission
       roles = memberships.collect {|m| m.roles}.flatten.uniq
       roles << (self.logged? ? Role.non_member : Role.anonymous)
-      roles.detect {|role|
+      roles.any? {|role|
         role.allowed_to?(action) &&
         (block_given? ? yield(role, self) : true)
       }
@@ -477,11 +548,18 @@ class User < Principal
     allowed_to?(action, nil, options.reverse_merge(:global => true), &block)
   end
 
+  # Returns true if the user is allowed to delete his own account
+  def own_account_deletable?
+    Setting.unsubscribe? &&
+      (!admin? || User.active.where("admin = ? AND id <> ?", true, id).exists?)
+  end
+
   safe_attributes 'login',
     'firstname',
     'lastname',
     'mail',
     'mail_notification',
+    'notified_project_ids',
     'language',
     'custom_field_values',
     'custom_fields',
@@ -489,6 +567,7 @@ class User < Principal
 
   safe_attributes 'status',
     'auth_source_id',
+    'generate_password',
     :if => lambda {|user, current_user| current_user.admin?}
 
   safe_attributes 'group_ids',
@@ -499,53 +578,41 @@ class User < Principal
   #
   # TODO: only supports Issue events currently
   def notify_about?(object)
-    case mail_notification
-    when 'all'
+    if mail_notification == 'all'
       true
-    when 'selected'
-      # user receives notifications for created/assigned issues on unselected projects
-      if object.is_a?(Issue) && (object.author == self || is_or_belongs_to?(object.assigned_to) || is_or_belongs_to?(object.assigned_to_was))
-        true
-      else
-        false
-      end
-    when 'none'
+    elsif mail_notification.blank? || mail_notification == 'none'
       false
-    when 'only_my_events'
-      if object.is_a?(Issue) && (object.author == self || is_or_belongs_to?(object.assigned_to) || is_or_belongs_to?(object.assigned_to_was))
-        true
-      else
-        false
-      end
-    when 'only_assigned'
-      if object.is_a?(Issue) && (is_or_belongs_to?(object.assigned_to) || is_or_belongs_to?(object.assigned_to_was))
-        true
-      else
-        false
-      end
-    when 'only_owner'
-      if object.is_a?(Issue) && object.author == self
-        true
-      else
-        false
-      end
     else
-      false
+      case object
+      when Issue
+        case mail_notification
+        when 'selected', 'only_my_events'
+          # user receives notifications for created/assigned issues on unselected projects
+          object.author == self || is_or_belongs_to?(object.assigned_to) || is_or_belongs_to?(object.assigned_to_was)
+        when 'only_assigned'
+          is_or_belongs_to?(object.assigned_to) || is_or_belongs_to?(object.assigned_to_was)
+        when 'only_owner'
+          object.author == self
+        end
+      when News
+        # always send to project members except when mail_notification is set to 'none'
+        true
+      end
     end
   end
 
   def self.current=(user)
-    @current_user = user
+    Thread.current[:current_user] = user
   end
 
   def self.current
-    @current_user ||= User.anonymous
+    Thread.current[:current_user] ||= User.anonymous
   end
 
   # Returns the anonymous user.  If the anonymous user does not exist, it is created.  There can be only
   # one anonymous user per database.
   def self.anonymous
-    anonymous_user = AnonymousUser.find(:first)
+    anonymous_user = AnonymousUser.first
     if anonymous_user.nil?
       anonymous_user = AnonymousUser.create(:lastname => 'Anonymous', :firstname => '', :mail => '', :login => '', :status => 0)
       raise 'Unable to create the anonymous user.' if anonymous_user.new_record?
@@ -558,11 +625,11 @@ class User < Principal
   # This method is used in the SaltPasswords migration and is to be kept as is
   def self.salt_unsalted_passwords!
     transaction do
-      User.find_each(:conditions => "salt IS NULL OR salt = ''") do |user|
+      User.where("salt IS NULL OR salt = ''").find_each do |user|
         next if user.hashed_password.blank?
         salt = User.generate_salt
         hashed_password = User.hash_password("#{salt}#{user.hashed_password}")
-        User.update_all("salt = '#{salt}', hashed_password = '#{hashed_password}'", ["id = ?", user.id] )
+        User.where(:id => user.id).update_all(:salt => salt, :hashed_password => hashed_password)
       end
     end
   end
@@ -570,6 +637,7 @@ class User < Principal
   protected
 
   def validate_password_length
+    return if password.blank? && generate_password?
     # Password length validation based on setting
     if !password.nil? && password.size < Setting.password_min_length.to_i
       errors.add(:password, :too_short, :count => Setting.password_min_length.to_i)
@@ -577,6 +645,13 @@ class User < Principal
   end
 
   private
+
+  def generate_password_if_needed
+    if generate_password? && auth_source.nil?
+      length = [Setting.password_min_length.to_i + 2, 10].max
+      random_password(length)
+    end
+  end
 
   # Removes references that are not handled by associations
   # Things that are not deleted are reassociated with the anonymous user
@@ -610,7 +685,7 @@ class User < Principal
 
   # Returns a 128bits random salt as a hex string (32 chars long)
   def self.generate_salt
-    ActiveSupport::SecureRandom.hex(16)
+    Redmine::Utils.random_hex(16)
   end
 
 end
@@ -620,7 +695,7 @@ class AnonymousUser < User
 
   def validate_anonymous_uniqueness
     # There should be only one AnonymousUser in the database
-    errors.add :base, 'An anonymous user already exists.' if AnonymousUser.find(:first)
+    errors.add :base, 'An anonymous user already exists.' if AnonymousUser.exists?
   end
 
   def available_custom_fields
@@ -634,6 +709,23 @@ class AnonymousUser < User
   def mail; nil end
   def time_zone; nil end
   def rss_key; nil end
+
+  def pref
+    UserPreference.new(:user => self)
+  end
+
+  # Returns the user's bult-in role
+  def builtin_role
+    @builtin_role ||= Role.anonymous
+  end
+
+  def membership(*args)
+    nil
+  end
+
+  def member_of?(*args)
+    false
+  end
 
   # Anonymous user can not be destroyed
   def destroy

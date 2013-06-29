@@ -1,3 +1,20 @@
+# Redmine - project management software
+# Copyright (C) 2006-2013  Jean-Philippe Lang
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
 class FilesController < ApplicationController
   menu_item :files
 
@@ -14,8 +31,8 @@ class FilesController < ApplicationController
                 'size' => "#{Attachment.table_name}.filesize",
                 'downloads' => "#{Attachment.table_name}.downloads"
 
-    @containers = [ Project.find(@project.id, :include => :attachments, :order => sort_clause)]
-    @containers += @project.versions.find(:all, :include => :attachments, :order => sort_clause).sort.reverse
+    @containers = [ Project.includes(:attachments).reorder(sort_clause).find(@project.id)]
+    @containers += @project.versions.includes(:attachments).reorder(sort_clause).all.sort.reverse
     render :layout => !request.xhr?
   end
 
@@ -29,7 +46,7 @@ class FilesController < ApplicationController
     render_attachment_warning_if_needed(container)
 
     if !attachments.empty? && !attachments[:files].blank? && Setting.notified_events.include?('file_added')
-      Mailer.deliver_attachments_added(attachments[:files])
+      Mailer.attachments_added(attachments[:files]).deliver
     end
     redirect_to project_files_path(@project)
   end

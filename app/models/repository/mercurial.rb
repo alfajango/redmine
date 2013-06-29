@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2011  Jean-Philippe Lang
+# Copyright (C) 2006-2013  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -76,12 +76,12 @@ class Repository::Mercurial < Repository
     return nil if name.blank?
     s = name.to_s
     if /[^\d]/ =~ s or s.size > 8
-      e = changesets.find(:first, :conditions => ['scmid = ?', s])
+      cs = changesets.where(:scmid => s).first
     else
-      e = changesets.find(:first, :conditions => ['revision = ?', s])
+      cs = changesets.where(:revision => s).first
     end
-    return e if e
-    changesets.find(:first, :conditions => ['scmid LIKE ?', "#{s}%"])  # last ditch
+    return cs if cs
+    changesets.where('scmid LIKE ?', "#{s}%").first
   end
 
   # Returns the latest changesets for +path+; sorted by revision number
@@ -92,11 +92,12 @@ class Repository::Mercurial < Repository
   # Sqlite3 and PostgreSQL pass.
   # Is this MySQL bug?
   def latest_changesets(path, rev, limit=10)
-    changesets.find(:all,
-                    :include    => :user,
-                    :conditions => latest_changesets_cond(path, rev, limit),
-                    :limit      => limit,
-                    :order      => "#{Changeset.table_name}.id DESC")
+    changesets.
+      includes(:user).
+      where(latest_changesets_cond(path, rev, limit)).
+      limit(limit).
+      order("#{Changeset.table_name}.id DESC").
+      all
   end
 
   def latest_changesets_cond(path, rev, limit)
@@ -138,19 +139,18 @@ class Repository::Mercurial < Repository
 
     logger.debug "Fetching changesets for repository #{url}" if logger
     (db_rev + 1).step(scm_rev, FETCH_AT_ONCE) do |i|
-      transaction do
-        scm.each_revision('', i, [i + FETCH_AT_ONCE - 1, scm_rev].min) do |re|
+      scm.each_revision('', i, [i + FETCH_AT_ONCE - 1, scm_rev].min) do |re|
+        transaction do
+          parents = (re.parents || []).collect{|rp| find_changeset_by_name(rp)}.compact
           cs = Changeset.create(:repository   => self,
                                 :revision     => re.revision,
                                 :scmid        => re.scmid,
                                 :committer    => re.author,
                                 :committed_on => re.time,
-                                :comments     => re.message)
-          re.paths.each { |e| cs.create_change(e) }
-          parents = {}
-          parents[cs] = re.parents unless re.parents.nil?
-          parents.each do |ch, chparents|
-            ch.parents = chparents.collect{|rp| find_changeset_by_name(rp)}.compact
+                                :comments     => re.message,
+                                :parents      => parents)
+          unless cs.new_record?
+            re.paths.each { |e| cs.create_change(e) }
           end
         end
       end

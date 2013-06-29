@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2011  Jean-Philippe Lang
+# Copyright (C) 2006-2013  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -16,6 +16,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 class Wiki < ActiveRecord::Base
+  include Redmine::SafeAttributes
   belongs_to :project
   has_many :pages, :class_name => 'WikiPage', :dependent => :destroy, :order => 'title'
   has_many :redirects, :class_name => 'WikiRedirect', :dependent => :delete_all
@@ -23,7 +24,9 @@ class Wiki < ActiveRecord::Base
   acts_as_watchable
 
   validates_presence_of :start_page
-  validates_format_of :start_page, :with => /^[^,\.\/\?\;\|\:]*$/
+  validates_format_of :start_page, :with => /\A[^,\.\/\?\;\|\:]*\z/
+
+  safe_attributes 'start_page'
 
   def visible?(user=User.current)
     !user.nil? && user.allowed_to?(:view_wiki_pages, project)
@@ -47,10 +50,10 @@ class Wiki < ActiveRecord::Base
     @page_found_with_redirect = false
     title = start_page if title.blank?
     title = Wiki.titleize(title)
-    page = pages.first(:conditions => ["LOWER(title) = LOWER(?)", title])
+    page = pages.where("LOWER(title) = LOWER(?)", title).first
     if !page && !(options[:with_redirect] == false)
       # search for a redirect
-      redirect = redirects.first(:conditions => ["LOWER(title) = LOWER(?)", title])
+      redirect = redirects.where("LOWER(title) = LOWER(?)", title).first
       if redirect
         page = find_page(redirect.redirects_to, :with_redirect => false)
         @page_found_with_redirect = true

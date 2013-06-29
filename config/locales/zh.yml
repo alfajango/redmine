@@ -3,6 +3,8 @@
 zh:
   # Text direction: Left-to-Right (ltr) or Right-to-Left (rtl)
   direction: ltr
+  jquery:
+    locale: "zh-CN"
   date:
     formats:
       # Use the strftime parameters for formats.
@@ -51,6 +53,9 @@ zh:
       about_x_hours:
         one: "大约一小时"
         other: "大约 %{count} 小时"
+      x_hours:
+        one:   "1 小时"
+        other: "%{count} 小时"
       x_days:
         one: "一天"
         other: "%{count} 天"
@@ -64,8 +69,8 @@ zh:
         one: "大约一年"
         other: "大约 %{count} 年"
       over_x_years:
-        one: "一年以上"
-        other: "%{count} 年以上"
+        one: "超过一年"
+        other: "超过 %{count} 年"
       almost_x_years:
         one:   "将近 1 年"
         other: "将近 %{count} 年"
@@ -79,14 +84,14 @@ zh:
     human:
       format:
         delimiter: ""
-        precision: 1
+        precision: 3
       storage_units:
         format: "%n %u"
         units:
           byte:
             one: "Byte"
             other: "Bytes"
-          kb: "kB"
+          kb: "KB"
           mb: "MB"
           gb: "GB"
           tb: "TB"
@@ -128,6 +133,7 @@ zh:
         not_same_project: "不属于同一个项目"
         circular_dependency: "此关联将导致循环依赖"
         cant_link_an_issue_with_a_descendant: "问题不能关联到它的子任务"
+        earlier_than_minimum_start_date: "cannot be earlier than %{date} because of preceding issues"
 
   actionview_instancetag_blank_option: 请选择
 
@@ -161,7 +167,7 @@ zh:
   notice_not_authorized_archived_project: 要访问的项目已经归档。
   notice_email_sent: "邮件已发送至 %{value}"
   notice_email_error: "发送邮件时发生错误 (%{value})"
-  notice_feeds_access_key_reseted: 您的RSS存取键已被重置。
+  notice_feeds_access_key_reseted: 您的Atom存取键已被重置。
   notice_api_access_key_reseted: 您的API访问键已被重置。
   notice_failed_to_save_issues: "%{count} 个问题保存失败（共选择 %{total} 个问题）：%{ids}."
   notice_failed_to_save_members: "成员保存失败: %{errors}."
@@ -207,8 +213,6 @@ zh:
   mail_subject_wiki_content_updated: "'%{id}' wiki页面已更新。"
   mail_body_wiki_content_updated: "'%{id}' wiki页面已由 %{author} 更新。"
 
-  gui_validation_error: 1 个错误
-  gui_validation_error_plural: "%{count} 个错误"
 
   field_name: 名称
   field_description: 描述
@@ -322,7 +326,7 @@ zh:
   setting_host_name: 主机名称
   setting_text_formatting: 文本格式
   setting_wiki_compression: 压缩Wiki历史文档
-  setting_feeds_limit: RSS Feed内容条数限制
+  setting_feeds_limit: Atom Feed内容条数限制
   setting_default_projects_public: 新建项目默认为公开项目
   setting_autofetch_changesets: 自动获取程序变更
   setting_sys_api_enabled: 启用用于版本库管理的Web Service
@@ -395,7 +399,6 @@ zh:
   permission_edit_own_time_entries: 编辑自己的耗时
   permission_manage_news: 管理新闻
   permission_comment_news: 为新闻添加评论
-  permission_manage_documents: 管理文档
   permission_view_documents: 查看文档
   permission_manage_files: 管理文件
   permission_view_files: 查看文件
@@ -520,8 +523,6 @@ zh:
   label_text: 文本
   label_attribute: 属性
   label_attribute_plural: 属性
-  label_download: "%{count} 次下载"
-  label_download_plural: "%{count} 次下载"
   label_no_data: 没有任何数据可供显示
   label_change_status: 变更状态
   label_history: 历史记录
@@ -624,8 +625,6 @@ zh:
   label_repository: 版本库
   label_repository_plural: 版本库
   label_browse: 浏览
-  label_modification: "%{count} 个更新"
-  label_modification_plural: "%{count} 个更新"
   label_branch: 分支
   label_tag: 标签
   label_revision: 修订
@@ -721,9 +720,9 @@ zh:
   label_language_based: 根据用户的语言
   label_sort_by: "根据 %{value} 排序"
   label_send_test_email: 发送测试邮件
-  label_feeds_access_key: RSS存取键
-  label_missing_feeds_access_key: 缺少RSS存取键
-  label_feeds_access_key_created_on: "RSS存取键是在 %{value} 之前建立的"
+  label_feeds_access_key: Atom存取键
+  label_missing_feeds_access_key: 缺少Atom存取键
+  label_feeds_access_key_created_on: "Atom存取键是在 %{value} 之前建立的"
   label_module_plural: 模块
   label_added_time_by: "由 %{author} 在 %{age} 之前添加"
   label_updated_time: " 更新于 %{value} 之前"
@@ -858,7 +857,6 @@ zh:
   text_subprojects_destroy_warning: "以下子项目也将被同时删除：%{value}"
   text_workflow_edit: 选择角色和跟踪标签来编辑工作流程
   text_are_you_sure: 您确定？
-  text_are_you_sure_with_children: "删除问题及子任务？"
   text_journal_changed: "%{label} 从 %{old} 变更为 %{new}"
   text_journal_set_to: "%{label} 被设置为 %{value}"
   text_journal_deleted: "%{label} 已删除 (%{old})"
@@ -1001,28 +999,100 @@ zh:
   label_child_revision: 子修订
   error_scm_annotate_big_text_file: 输入文本内容超长，无法输入。
   setting_default_issue_start_date_to_creation_date: 使用当前日期作为新问题的开始日期
-  button_edit_section: Edit this section
-  setting_repositories_encodings: Attachments and repositories encodings
-  description_all_columns: All Columns
-  button_export: Export
-  label_export_options: "%{export_format} export options"
-  error_attachment_too_big: This file cannot be uploaded because it exceeds the maximum allowed file size (%{max_size})
-  notice_failed_to_save_time_entries: "Failed to save %{count} time entrie(s) on %{total} selected: %{ids}."
+  button_edit_section: 编辑此区域
+  setting_repositories_encodings: 附件和版本库编码
+  description_all_columns: 所有列
+  button_export: 导出
+  label_export_options: "%{export_format} 导出选项"
+  error_attachment_too_big: 该文件无法上传。超过文件大小限制 (%{max_size})
+  notice_failed_to_save_time_entries: "无法保存下列所选取的 %{total} 个项目中的 %{count} 工时： %{ids}。"
   label_x_issues:
     zero:  0 问题
     one:   1 问题
     other: "%{count} 问题"
-  label_repository_new: New repository
-  field_repository_is_default: Main repository
-  label_copy_attachments: Copy attachments
+  label_repository_new: 新建版本库
+  field_repository_is_default: 主版本库
+  label_copy_attachments: 复制附件
   label_item_position: "%{position}/%{count}"
-  label_completed_versions: Completed versions
-  text_project_identifier_info: Only lower case letters (a-z), numbers, dashes and underscores are allowed.<br />Once saved, the identifier cannot be changed.
-  field_multiple: Multiple values
-  setting_commit_cross_project_ref: Allow issues of all the other projects to be referenced and fixed
-  text_issue_conflict_resolution_add_notes: Add my notes and discard my other changes
-  text_issue_conflict_resolution_overwrite: Apply my changes anyway (previous notes will be kept but some changes may be overwritten)
-  notice_issue_update_conflict: The issue has been updated by an other user while you were editing it.
-  text_issue_conflict_resolution_cancel: Discard all my changes and redisplay %{link}
-  permission_manage_related_issues: Manage related issues
-  field_ldap_filter: LDAP filter
+  label_completed_versions: 已完成的版本
+  text_project_identifier_info: 仅小写字母（a-z）、数字、破折号（-）和下划线（_）可以使用。<br />一旦保存，标识无法修改。
+  field_multiple: 多重取值
+  setting_commit_cross_project_ref: 允许引用/修复所有其他项目的问题
+  text_issue_conflict_resolution_add_notes: 添加说明并取消我的其他变更处理。
+  text_issue_conflict_resolution_overwrite: 直接套用我的变更 （先前的说明将被保留，但是某些变更内容可能会被覆盖）
+  notice_issue_update_conflict: 当您正在编辑这个问题的时候，它已经被其他人抢先一步更新过了。
+  text_issue_conflict_resolution_cancel: 取消我所有的变更并重新刷新显示 %{link} 。
+  permission_manage_related_issues: 相关问题管理
+  field_auth_source_ldap_filter: LDAP 过滤器
+  label_search_for_watchers: 通过查找方式添加跟踪者
+  notice_account_deleted: 您的账号已被永久删除（账号已无法恢复）。
+  setting_unsubscribe: 允许用户退订
+  button_delete_my_account: 删除我的账号
+  text_account_destroy_confirmation: |-
+    确定继续处理？
+    您的账号一旦删除，将无法再次激活使用。
+  error_session_expired: 您的会话已过期。请重新登陆。
+  text_session_expiration_settings: "警告： 更改这些设置将会使包括你在内的当前会话失效。"
+  setting_session_lifetime: 会话最大有效时间
+  setting_session_timeout: 会话闲置超时
+  label_session_expiration: 会话过期
+  permission_close_project: 关闭/重开项目
+  label_show_closed_projects: 查看已关闭的项目
+  button_close: 关闭
+  button_reopen: 重开
+  project_status_active: 已激活
+  project_status_closed: 已关闭
+  project_status_archived: 已存档
+  text_project_closed: 当前项目已被关闭。当前项目只读。
+  notice_user_successful_create: 用户 %{id} 已创建。
+  field_core_fields: 标准字段
+  field_timeout: 超时 (秒)
+  setting_thumbnails_enabled: 显示附件略缩图
+  setting_thumbnails_size: 略缩图尺寸 (像素)
+  label_status_transitions: 状态转换
+  label_fields_permissions: 字段权限
+  label_readonly: 只读
+  label_required: 必填
+  text_repository_identifier_info: 仅小写字母（a-z）、数字、破折号（-）和下划线（_）可以使用。<br />一旦保存，标识无法修改。
+  field_board_parent: 父论坛
+  label_attribute_of_project: 项目 %{name}
+  label_attribute_of_author: 作者 %{name}
+  label_attribute_of_assigned_to: 分配给 %{name}
+  label_attribute_of_fixed_version: 目标版本 %{name}
+  label_copy_subtasks: 复制子任务
+  label_copied_to: 复制到
+  label_copied_from: 复制于
+  label_any_issues_in_project: 项目内任意问题
+  label_any_issues_not_in_project: 项目外任意问题
+  field_private_notes: 私有注解
+  permission_view_private_notes: 查看私有注解
+  permission_set_notes_private: 设置为私有注解
+  label_no_issues_in_project: 项目内无相关问题
+  label_any: 全部
+  label_last_n_weeks: 上 %{count} 周前
+  setting_cross_project_subtasks: 支持跨项目子任务
+  label_cross_project_descendants: 与子项目共享
+  label_cross_project_tree: 与项目树共享
+  label_cross_project_hierarchy: 与项目继承层次共享
+  label_cross_project_system: 与所有项目共享
+  button_hide: 隐藏
+  setting_non_working_week_days: Non-working days
+  label_in_the_next_days: in the next
+  label_in_the_past_days: in the past
+  label_attribute_of_user: User's %{name}
+  text_turning_multiple_off: If you disable multiple values, multiple values will be
+    removed in order to preserve only one value per item.
+  label_attribute_of_issue: Issue's %{name}
+  permission_add_documents: Add documents
+  permission_edit_documents: Edit documents
+  permission_delete_documents: Delete documents
+  label_gantt_progress_line: Progress line
+  setting_jsonp_enabled: Enable JSONP support
+  field_inherit_members: Inherit members
+  field_closed_on: Closed
+  field_generate_password: Generate password
+  setting_default_projects_tracker_ids: Default trackers for new projects
+  label_total_time: 合计
+  notice_account_not_activated_yet: You haven't activated your account yet. If you want
+    to receive a new activation email, please <a href="%{url}">click this link</a>.
+  notice_account_locked: Your account is locked.

@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2011  Jean-Philippe Lang
+# Copyright (C) 2006-2013  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -15,8 +15,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require 'iconv'
 require 'net/ldap'
+require 'net/ldap/dn'
+require 'timeout'
 
 class AuthSourceLdap < AuthSource
   validates_presence_of :host, :port, :attr_login
@@ -24,6 +25,7 @@ class AuthSourceLdap < AuthSource
   validates_length_of :account, :account_password, :base_dn, :filter, :maximum => 255, :allow_blank => true
   validates_length_of :attr_login, :attr_firstname, :attr_lastname, :attr_mail, :maximum => 30, :allow_nil => true
   validates_numericality_of :port, :only_integer => true
+  validates_numericality_of :timeout, :only_integer => true, :allow_blank => true
   validate :validate_filter
 
   before_validation :strip_ldap_attributes
@@ -35,29 +37,69 @@ class AuthSourceLdap < AuthSource
 
   def authenticate(login, password)
     return nil if login.blank? || password.blank?
-    attrs = get_user_dn(login)
 
-    if attrs && attrs[:dn] && authenticate_dn(attrs[:dn], password)
-      logger.debug "Authentication successful for '#{login}'" if logger && logger.debug?
-      return attrs.except(:dn)
+    with_timeout do
+      attrs = get_user_dn(login, password)
+      if attrs && attrs[:dn] && authenticate_dn(attrs[:dn], password)
+        logger.debug "Authentication successful for '#{login}'" if logger && logger.debug?
+        return attrs.except(:dn)
+      end
     end
-  rescue  Net::LDAP::LdapError => e
+  rescue Net::LDAP::LdapError => e
     raise AuthSourceException.new(e.message)
   end
 
   # test the connection to the LDAP
   def test_connection
-    ldap_con = initialize_ldap_con(self.account, self.account_password)
-    ldap_con.open { }
-  rescue  Net::LDAP::LdapError => text
-    raise "LdapError: " + text
+    with_timeout do
+      ldap_con = initialize_ldap_con(self.account, self.account_password)
+      ldap_con.open { }
+    end
+  rescue Net::LDAP::LdapError => e
+    raise AuthSourceException.new(e.message)
   end
 
   def auth_method_name
     "LDAP"
   end
 
+  # Returns true if this source can be searched for users
+  def searchable?
+    !account.to_s.include?("$login") && %w(login firstname lastname mail).all? {|a| send("attr_#{a}?")}
+  end
+
+  # Searches the source for users and returns an array of results
+  def search(q)
+    q = q.to_s.strip
+    return [] unless searchable? && q.present?
+
+    results = []
+    search_filter = base_filter & Net::LDAP::Filter.begins(self.attr_login, q)
+    ldap_con = initialize_ldap_con(self.account, self.account_password)
+    ldap_con.search(:base => self.base_dn,
+                    :filter => search_filter,
+                    :attributes => ['dn', self.attr_login, self.attr_firstname, self.attr_lastname, self.attr_mail],
+                    :size => 10) do |entry|
+      attrs = get_user_attributes_from_ldap_entry(entry)
+      attrs[:login] = AuthSourceLdap.get_attr(entry, self.attr_login)
+      results << attrs
+    end
+    results
+  rescue Net::LDAP::LdapError => e
+    raise AuthSourceException.new(e.message)
+  end
+
   private
+
+  def with_timeout(&block)
+    timeout = self.timeout
+    timeout = 20 unless timeout && timeout > 0
+    Timeout.timeout(timeout) do
+      return yield
+    end
+  rescue Timeout::Error => e
+    raise AuthSourceTimeoutException.new(e.message)
+  end
 
   def ldap_filter
     if filter.present?
@@ -65,6 +107,14 @@ class AuthSourceLdap < AuthSource
     end
   rescue Net::LDAP::LdapError
     nil
+  end
+
+  def base_filter
+    filter = Net::LDAP::Filter.eq("objectClass", "*")
+    if f = ldap_filter
+      filter = filter & f
+    end
+    filter
   end
 
   def validate_filter
@@ -116,16 +166,15 @@ class AuthSourceLdap < AuthSource
   end
 
   # Get the user's dn and any attributes for them, given their login
-  def get_user_dn(login)
-    ldap_con = initialize_ldap_con(self.account, self.account_password)
-    login_filter = Net::LDAP::Filter.eq( self.attr_login, login )
-    object_filter = Net::LDAP::Filter.eq( "objectClass", "*" )
-    attrs = {}
-
-    search_filter = object_filter & login_filter
-    if f = ldap_filter
-      search_filter = search_filter & f
+  def get_user_dn(login, password)
+    ldap_con = nil
+    if self.account && self.account.include?("$login")
+      ldap_con = initialize_ldap_con(self.account.sub("$login", Net::LDAP::DN.escape(login)), password)
+    else
+      ldap_con = initialize_ldap_con(self.account, self.account_password)
     end
+    attrs = {}
+    search_filter = base_filter & Net::LDAP::Filter.eq(self.attr_login, login)
 
     ldap_con.search( :base => self.base_dn,
                      :filter => search_filter,

@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2011  Jean-Philippe Lang
+# Copyright (C) 2006-2013  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -19,8 +19,10 @@ require File.expand_path('../../../test_helper', __FILE__)
 
 class TimelogHelperTest < ActionView::TestCase
   include TimelogHelper
+  include Redmine::I18n
   include ActionView::Helpers::TextHelper
   include ActionView::Helpers::DateHelper
+  include ERB::Util
 
   fixtures :projects, :roles, :enabled_modules, :users,
                       :repositories, :changesets,

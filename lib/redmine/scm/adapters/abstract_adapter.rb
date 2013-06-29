@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2011  Jean-Philippe Lang
+# Copyright (C) 2006-2013  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -16,6 +16,10 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 require 'cgi'
+
+if RUBY_VERSION < '1.9'
+  require 'iconv'
+end
 
 module Redmine
   module Scm
@@ -206,30 +210,53 @@ module Redmine
           self.class.logger
         end
 
-        def shellout(cmd, &block)
-          self.class.shellout(cmd, &block)
+        def shellout(cmd, options = {}, &block)
+          self.class.shellout(cmd, options, &block)
         end
 
         def self.logger
           Rails.logger
         end
 
-        def self.shellout(cmd, &block)
+        # Path to the file where scm stderr output is logged
+        # Returns nil if the log file is not writable
+        def self.stderr_log_file
+          if @stderr_log_file.nil?
+            writable = false
+            path = Redmine::Configuration['scm_stderr_log_file'].presence
+            path ||= Rails.root.join("log/#{Rails.env}.scm.stderr.log").to_s
+            if File.exists?(path)
+              if File.file?(path) && File.writable?(path) 
+                writable = true
+              else
+                logger.warn("SCM log file (#{path}) is not writable")
+              end
+            else
+              begin
+                File.open(path, "w") {}
+                writable = true
+              rescue => e
+                logger.warn("SCM log file (#{path}) cannot be created: #{e.message}")
+              end
+            end
+            @stderr_log_file = writable ? path : false
+          end
+          @stderr_log_file || nil
+        end
+
+        def self.shellout(cmd, options = {}, &block)
           if logger && logger.debug?
             logger.debug "Shelling out: #{strip_credential(cmd)}"
-          end
-          if Rails.env == 'development'
-            # Capture stderr when running in dev environment
-            cmd = "#{cmd} 2>>#{shell_quote(Rails.root.join('log/scm.stderr.log').to_s)}"
+            # Capture stderr in a log file
+            if stderr_log_file
+              cmd = "#{cmd} 2>>#{shell_quote(stderr_log_file)}"
+            end
           end
           begin
-            if RUBY_VERSION < '1.9'
-              mode = "r+"
-            else
-              mode = "r+:ASCII-8BIT"
-            end
+            mode = "r+"
             IO.popen(cmd, mode) do |io|
-              io.close_write
+              io.set_encoding("ASCII-8BIT") if io.respond_to?(:set_encoding)
+              io.close_write unless options[:write_stdin]
               block.call(io) if block_given?
             end
           ## If scm command does not exist,
@@ -263,18 +290,35 @@ module Redmine
         def scm_iconv(to, from, str)
           return nil if str.nil?
           return str if to == from
-          begin
-            Iconv.conv(to, from, str)
-          rescue Iconv::Failure => err
-            logger.error("failed to convert from #{from} to #{to}. #{err}")
-            nil
+          if str.respond_to?(:force_encoding)
+            str.force_encoding(from)
+            begin
+              str.encode(to)
+            rescue Exception => err
+              logger.error("failed to convert from #{from} to #{to}. #{err}")
+              nil
+            end
+          else
+            begin
+              Iconv.conv(to, from, str)
+            rescue Iconv::Failure => err
+              logger.error("failed to convert from #{from} to #{to}. #{err}")
+              nil
+            end
           end
+        end
+
+        def parse_xml(xml)
+          if RUBY_PLATFORM == 'java'
+            xml = xml.sub(%r{<\?xml[^>]*\?>}, '')
+          end
+          ActiveSupport::XmlMini.parse(xml)
         end
       end
 
       class Entries < Array
         def sort_by_name
-          sort {|x,y|
+          dup.sort! {|x,y|
             if x.kind == y.kind
               x.name.to_s <=> y.name.to_s
             else
@@ -297,7 +341,8 @@ module Redmine
       end
 
       class Entry
-        attr_accessor :name, :path, :kind, :size, :lastrev
+        attr_accessor :name, :path, :kind, :size, :lastrev, :changeset
+
         def initialize(attributes={})
           self.name = attributes[:name] if attributes[:name]
           self.path = attributes[:path] if attributes[:path]
@@ -316,6 +361,14 @@ module Redmine
 
         def is_text?
           Redmine::MimeType.is_type?('text', name)
+        end
+
+        def author
+          if changeset
+            changeset.author.to_s
+          elsif lastrev
+            Redmine::CodesetUtil.replace_invalid_utf8(lastrev.author.to_s.split('<').first)
+          end
         end
       end
 
@@ -352,6 +405,18 @@ module Redmine
         # Returns the readable identifier.
         def format_identifier
           self.identifier.to_s
+        end
+
+        def ==(other)
+          if other.nil?
+            false
+          elsif scmid.present?
+            scmid == other.scmid
+          elsif identifier.present?
+            identifier == other.identifier
+          elsif revision.present?
+            revision == other.revision
+          end
         end
       end
 

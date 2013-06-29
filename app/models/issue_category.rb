@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2011  Jean-Philippe Lang
+# Copyright (C) 2006-2013  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -16,6 +16,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 class IssueCategory < ActiveRecord::Base
+  include Redmine::SafeAttributes
   belongs_to :project
   belongs_to :assigned_to, :class_name => 'Principal', :foreign_key => 'assigned_to_id'
   has_many :issues, :foreign_key => 'category_id', :dependent => :nullify
@@ -23,10 +24,10 @@ class IssueCategory < ActiveRecord::Base
   validates_presence_of :name
   validates_uniqueness_of :name, :scope => [:project_id]
   validates_length_of :name, :maximum => 30
-  
-  attr_protected :project_id
 
-  named_scope :named, lambda {|arg| { :conditions => ["LOWER(#{table_name}.name) = LOWER(?)", arg.to_s.strip]}}
+  safe_attributes 'name', 'assigned_to_id'
+
+  scope :named, lambda {|arg| where("LOWER(#{table_name}.name) = LOWER(?)", arg.to_s.strip)}
 
   alias :destroy_without_reassign :destroy
 
@@ -34,7 +35,7 @@ class IssueCategory < ActiveRecord::Base
   # If a category is specified, issues are reassigned to this category
   def destroy(reassign_to = nil)
     if reassign_to && reassign_to.is_a?(IssueCategory) && reassign_to.project == self.project
-      Issue.update_all("category_id = #{reassign_to.id}", "category_id = #{id}")
+      Issue.update_all({:category_id => reassign_to.id}, {:category_id => id})
     end
     destroy_without_reassign
   end

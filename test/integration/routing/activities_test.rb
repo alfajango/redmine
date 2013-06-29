@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2011  Jean-Philippe Lang
+# Copyright (C) 2006-2013  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -21,11 +21,11 @@ class RoutingActivitiesTest < ActionController::IntegrationTest
   def test_activities
     assert_routing(
            { :method => 'get', :path => "/activity" },
-           { :controller => 'activities', :action => 'index', :id => nil }
+           { :controller => 'activities', :action => 'index' }
         )
     assert_routing(
            { :method => 'get', :path => "/activity.atom" },
-           { :controller => 'activities', :action => 'index', :id => nil, :format => 'atom' }
+           { :controller => 'activities', :action => 'index', :format => 'atom' }
         )
     assert_routing(
         { :method => 'get', :path => "/projects/33/activity" },

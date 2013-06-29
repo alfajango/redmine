@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2011  Jean-Philippe Lang
+# Copyright (C) 2006-2013  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -30,12 +30,6 @@ class RepositoryGitTest < ActiveSupport::TestCase
 
   FELIX_HEX  = "Felix Sch\xC3\xA4fer"
   CHAR_1_HEX = "\xc3\x9c"
-
-  ## Ruby uses ANSI api to fork a process on Windows.
-  ## Japanese Shift_JIS and Traditional Chinese Big5 have 0x5c(backslash) problem
-  ## and these are incompatible with ASCII.
-  # WINDOWS_PASS = Redmine::Platform.mswin?
-  WINDOWS_PASS = false
 
   ## Git, Mercurial and CVS path encodings are binary.
   ## Subversion supports URL encoding for path.
@@ -85,12 +79,27 @@ class RepositoryGitTest < ActiveSupport::TestCase
   end
 
   if File.directory?(REPOSITORY_PATH)
+    ## Ruby uses ANSI api to fork a process on Windows.
+    ## Japanese Shift_JIS and Traditional Chinese Big5 have 0x5c(backslash) problem
+    ## and these are incompatible with ASCII.
+    ## Git for Windows (msysGit) changed internal API from ANSI to Unicode in 1.7.10
+    ## http://code.google.com/p/msysgit/issues/detail?id=80
+    ## So, Latin-1 path tests fail on Japanese Windows
+    WINDOWS_PASS = (Redmine::Platform.mswin? &&
+                         Redmine::Scm::Adapters::GitAdapter.client_version_above?([1, 7, 10]))
+    WINDOWS_SKIP_STR = "TODO: This test fails in Git for Windows above 1.7.10"
+
     def test_scm_available
       klass = Repository::Git
       assert_equal "Git", klass.scm_name
       assert klass.scm_adapter_class
       assert_not_equal "", klass.scm_command
       assert_equal true, klass.scm_available
+    end
+
+    def test_entries
+      entries = @repository.entries
+      assert_kind_of Redmine::Scm::Adapters::Entries, entries
     end
 
     def test_fetch_changesets_from_scratch
@@ -101,7 +110,7 @@ class RepositoryGitTest < ActiveSupport::TestCase
       @project.reload
 
       assert_equal NUM_REV, @repository.changesets.count
-      assert_equal 39, @repository.changes.count
+      assert_equal 39, @repository.filechanges.count
 
       commit = @repository.changesets.find_by_revision("7234cb2750b63f47bff735edc50a1c0a433c2518")
       assert_equal "7234cb2750b63f47bff735edc50a1c0a433c2518", commit.scmid
@@ -111,9 +120,10 @@ class RepositoryGitTest < ActiveSupport::TestCase
       # TODO: add a commit with commit time <> author time to the test repository
       assert_equal "2007-12-14 09:22:52".to_time, commit.committed_on
       assert_equal "2007-12-14".to_date, commit.commit_date
-      assert_equal 3, commit.changes.count
-      change = commit.changes.sort_by(&:path).first
+      assert_equal 3, commit.filechanges.count
+      change = commit.filechanges.sort_by(&:path).first
       assert_equal "README", change.path
+      assert_equal nil, change.from_path
       assert_equal "A", change.action
 
       assert_equal NUM_HEAD, @repository.extra_info["heads"].size
@@ -190,14 +200,14 @@ class RepositoryGitTest < ActiveSupport::TestCase
       @project.reload
       assert_equal NUM_REV - 5, @repository.changesets.count
 
-      extra_info_heads << "abcd1234efgh"
+      extra_info_heads << "1234abcd5678"
       h = {}
       h["heads"] = extra_info_heads
       @repository.merge_extra_info(h)
       @repository.save
       @project.reload
       h1 = @repository.extra_info["heads"].dup
-      assert h1.index("abcd1234efgh")
+      assert h1.index("1234abcd5678")
       assert_equal 5, h1.size
 
       @repository.fetch_changesets
@@ -205,6 +215,40 @@ class RepositoryGitTest < ActiveSupport::TestCase
       assert_equal NUM_REV - 5, @repository.changesets.count
       h2 = @repository.extra_info["heads"].dup
       assert_equal h1, h2
+    end
+
+    def test_keep_extra_report_last_commit_in_clear_changesets
+      assert_nil @repository.extra_info
+      h = {}
+      h["extra_report_last_commit"] = "1"
+      @repository.merge_extra_info(h)
+      @repository.save
+      @project.reload
+
+      assert_equal 0, @repository.changesets.count
+      @repository.fetch_changesets
+      @project.reload
+
+      assert_equal NUM_REV, @repository.changesets.count
+      @repository.send(:clear_changesets)
+      assert_equal 1, @repository.extra_info.size
+      assert_equal "1", @repository.extra_info["extra_report_last_commit"]
+    end
+
+    def test_refetch_after_clear_changesets
+      assert_nil @repository.extra_info
+      assert_equal 0, @repository.changesets.count
+      @repository.fetch_changesets
+      @project.reload
+      assert_equal NUM_REV, @repository.changesets.count
+
+      @repository.send(:clear_changesets)
+      @project.reload
+      assert_equal 0, @repository.changesets.count
+
+      @repository.fetch_changesets
+      @project.reload
+      assert_equal NUM_REV, @repository.changesets.count
     end
 
     def test_parents
@@ -399,7 +443,9 @@ class RepositoryGitTest < ActiveSupport::TestCase
               '61b685fbe55ab05b5ac68402d5720c1a6ac973d1',
           ], changesets.collect(&:revision)
 
-      if JRUBY_SKIP
+      if WINDOWS_PASS
+        puts WINDOWS_SKIP_STR
+      elsif JRUBY_SKIP
         puts JRUBY_SKIP_STR
       else
         # latin-1 encoding path
@@ -420,7 +466,7 @@ class RepositoryGitTest < ActiveSupport::TestCase
 
     def test_latest_changesets_latin_1_dir
       if WINDOWS_PASS
-        #
+        puts WINDOWS_SKIP_STR
       elsif JRUBY_SKIP
         puts JRUBY_SKIP_STR
       else

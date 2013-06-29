@@ -1,7 +1,7 @@
 # encoding: utf-8
 #
 # Redmine - project management software
-# Copyright (C) 2006-2011  Jean-Philippe Lang
+# Copyright (C) 2006-2013  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -28,13 +28,9 @@ class ChangesetTest < ActiveSupport::TestCase
            :users, :members, :member_roles, :trackers,
            :enabled_modules, :roles
 
-  def setup
-  end
-
   def test_ref_keywords_any
     ActionMailer::Base.deliveries.clear
-    Setting.commit_fix_status_id = IssueStatus.find(
-                                   :first, :conditions => ["is_closed = ?", true]).id
+    Setting.commit_fix_status_id = IssueStatus.where(:is_closed => true).first.id
     Setting.commit_fix_done_ratio = '90'
     Setting.commit_ref_keywords = '*'
     Setting.commit_fix_keywords = 'fixes , closes'
@@ -116,8 +112,7 @@ class ChangesetTest < ActiveSupport::TestCase
   end
 
   def test_ref_keywords_closing_with_timelog
-    Setting.commit_fix_status_id = IssueStatus.find(
-                                    :first, :conditions => ["is_closed = ?", true]).id
+    Setting.commit_fix_status_id = IssueStatus.where(:is_closed => true).first.id
     Setting.commit_ref_keywords = '*'
     Setting.commit_fix_keywords = 'fixes , closes'
     Setting.commit_logtime_enabled = '1'
@@ -179,7 +174,8 @@ class ChangesetTest < ActiveSupport::TestCase
   end
 
   def test_commit_closing_a_subproject_issue
-    with_settings :commit_fix_status_id => 5, :commit_fix_keywords => 'closes' do
+    with_settings :commit_fix_status_id => 5, :commit_fix_keywords => 'closes',
+                  :default_language => 'en' do
       issue = Issue.find(5)
       assert !issue.closed?
       assert_difference 'Journal.count' do
@@ -253,6 +249,17 @@ class ChangesetTest < ActiveSupport::TestCase
   def test_text_tag_revision_with_different_project
     c = Changeset.new(:revision => '520', :repository => Project.find(1).repository)
     assert_equal 'ecookbook:r520', c.text_tag(Project.find(2))
+  end
+
+  def test_text_tag_revision_with_repository_identifier
+    r = Repository::Subversion.create!(
+          :project_id => 1,
+          :url     => 'svn://localhost/test',
+          :identifier => 'documents')
+    
+    c = Changeset.new(:revision => '520', :repository => r)
+    assert_equal 'documents|r520', c.text_tag
+    assert_equal 'ecookbook:documents|r520', c.text_tag(Project.find(2))
   end
 
   def test_text_tag_hash

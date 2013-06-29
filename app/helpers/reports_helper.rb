@@ -1,7 +1,7 @@
 # encoding: utf-8
 #
 # Redmine - project management software
-# Copyright (C) 2006-2011  Jean-Philippe Lang
+# Copyright (C) 2006-2013  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -34,5 +34,10 @@ module ReportsHelper
   def aggregate_link(data, criteria, *args)
     a = aggregate data, criteria
     a > 0 ? link_to(h(a), *args) : '-'
+  end
+
+  def aggregate_path(project, field, row, options={})
+    parameters = {:set_filter => 1, :subproject_id => '!*', field => row.id}.merge(options)
+    project_issues_path(row.is_a?(Project) ? row : project, parameters)
   end
 end

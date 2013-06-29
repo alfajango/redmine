@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2011  Jean-Philippe Lang
+# Copyright (C) 2006-2013  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -28,28 +28,32 @@ class RoutingAuthSourcesTest < ActionController::IntegrationTest
         { :controller => 'auth_sources', :action => 'new' }
       )
     assert_routing(
-        { :method => 'post', :path => "/auth_sources/create" },
+        { :method => 'post', :path => "/auth_sources" },
         { :controller => 'auth_sources', :action => 'create' }
       )
     assert_routing(
-        { :method => 'post', :path => "/auth_sources/destroy/1234" },
-        { :controller => 'auth_sources', :action => 'destroy',
-          :id => '1234' }
-      )
-    assert_routing(
-        { :method => 'get', :path => "/auth_sources/test_connection/1234" },
-        { :controller => 'auth_sources', :action => 'test_connection',
-          :id => '1234' }
-      )
-    assert_routing(
-        { :method => 'get', :path => "/auth_sources/edit/1234" },
+        { :method => 'get', :path => "/auth_sources/1234/edit" },
         { :controller => 'auth_sources', :action => 'edit',
           :id => '1234' }
       )
     assert_routing(
-        { :method => 'post', :path => "/auth_sources/update/1234" },
+        { :method => 'put', :path => "/auth_sources/1234" },
         { :controller => 'auth_sources', :action => 'update',
           :id => '1234' }
+      )
+    assert_routing(
+        { :method => 'delete', :path => "/auth_sources/1234" },
+        { :controller => 'auth_sources', :action => 'destroy',
+          :id => '1234' }
+      )
+    assert_routing(
+        { :method => 'get', :path => "/auth_sources/1234/test_connection" },
+        { :controller => 'auth_sources', :action => 'test_connection',
+          :id => '1234' }
+      )
+    assert_routing(
+        { :method => 'get', :path => "/auth_sources/autocomplete_for_new_user" },
+        { :controller => 'auth_sources', :action => 'autocomplete_for_new_user' }
       )
   end
 end

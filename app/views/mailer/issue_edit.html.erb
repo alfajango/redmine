@@ -1,3 +1,6 @@
+<% if @journal.private_notes? %>
+  (<%= l(:field_private_notes) %>)
+<% end %>
 <%= l(:text_issue_updated, :id => "##{@issue.id}", :author => h(@journal.user)) %>
 
 <ul>
@@ -8,4 +11,4 @@
 
 <%= textilizable(@journal, :notes, :only_path => false) %>
 <hr />
-<%= render :partial => "issue.html.erb", :locals => { :issue => @issue, :issue_url => @issue_url } %>
+<%= render :partial => 'issue', :formats => [:html], :locals => { :issue => @issue, :issue_url => @issue_url } %>

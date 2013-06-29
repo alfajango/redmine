@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2011  Jean-Philippe Lang
+# Copyright (C) 2006-2013  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -19,10 +19,11 @@ require File.expand_path('../../test_helper', __FILE__)
 
 class MailerTest < ActiveSupport::TestCase
   include Redmine::I18n
-  include ActionController::Assertions::SelectorAssertions
+  include ActionDispatch::Assertions::SelectorAssertions
   fixtures :projects, :enabled_modules, :issues, :users, :members,
            :member_roles, :roles, :documents, :attachments, :news,
-           :tokens, :journals, :journal_details, :changesets, :trackers,
+           :tokens, :journals, :journal_details, :changesets,
+           :trackers, :projects_trackers,
            :issue_statuses, :enumerations, :messages, :boards, :repositories,
            :wikis, :wiki_pages, :wiki_contents, :wiki_content_versions,
            :versions,
@@ -41,7 +42,7 @@ class MailerTest < ActiveSupport::TestCase
     Setting.protocol = 'https'
 
     journal = Journal.find(3)
-    assert Mailer.deliver_issue_edit(journal)
+    assert Mailer.issue_edit(journal).deliver
 
     mail = last_email
     assert_not_nil mail
@@ -54,7 +55,7 @@ class MailerTest < ActiveSupport::TestCase
       # link to a referenced ticket
       assert_select 'a[href=?][title=?]',
                     'https://mydomain.foo/issues/1',
-                    'Can\'t print recipes (New)',
+                    'Can&#x27;t print recipes (New)',
                     :text => '#1'
       # link to a changeset
       assert_select 'a[href=?][title=?]',
@@ -78,10 +79,9 @@ class MailerTest < ActiveSupport::TestCase
     relative_url_root = Redmine::Utils.relative_url_root
     Setting.host_name = 'mydomain.foo/rdm'
     Setting.protocol = 'http'
-    Redmine::Utils.relative_url_root = '/rdm'
 
     journal = Journal.find(3)
-    assert Mailer.deliver_issue_edit(journal)
+    assert Mailer.issue_edit(journal).deliver
 
     mail = last_email
     assert_not_nil mail
@@ -94,7 +94,7 @@ class MailerTest < ActiveSupport::TestCase
       # link to a referenced ticket
       assert_select 'a[href=?][title=?]',
                     'http://mydomain.foo/rdm/issues/1',
-                    'Can\'t print recipes (New)',
+                    'Can&#x27;t print recipes (New)',
                     :text => '#1'
       # link to a changeset
       assert_select 'a[href=?][title=?]',
@@ -111,9 +111,6 @@ class MailerTest < ActiveSupport::TestCase
                     'http://mydomain.foo/rdm/attachments/download/4/source.rb',
                     :text => 'source.rb'
     end
-  ensure
-    # restore it
-    Redmine::Utils.relative_url_root = relative_url_root
   end
 
   def test_generated_links_with_prefix_and_no_relative_url_root
@@ -124,7 +121,7 @@ class MailerTest < ActiveSupport::TestCase
     Redmine::Utils.relative_url_root = nil
 
     journal = Journal.find(3)
-    assert Mailer.deliver_issue_edit(journal)
+    assert Mailer.issue_edit(journal).deliver
 
     mail = last_email
     assert_not_nil mail
@@ -137,7 +134,7 @@ class MailerTest < ActiveSupport::TestCase
       # link to a referenced ticket
       assert_select 'a[href=?][title=?]',
                     'http://mydomain.foo/rdm/issues/1',
-                    'Can\'t print recipes (New)',
+                    'Can&#x27;t print recipes (New)',
                     :text => '#1'
       # link to a changeset
       assert_select 'a[href=?][title=?]',
@@ -161,26 +158,27 @@ class MailerTest < ActiveSupport::TestCase
 
   def test_email_headers
     issue = Issue.find(1)
-    Mailer.deliver_issue_add(issue)
+    Mailer.issue_add(issue).deliver
     mail = last_email
     assert_not_nil mail
-    assert_equal 'OOF', mail.header_string('X-Auto-Response-Suppress')
-    assert_equal 'auto-generated', mail.header_string('Auto-Submitted')
+    assert_equal 'OOF', mail.header['X-Auto-Response-Suppress'].to_s
+    assert_equal 'auto-generated', mail.header['Auto-Submitted'].to_s
+    assert_equal '<redmine.example.net>', mail.header['List-Id'].to_s
   end
 
   def test_email_headers_should_include_sender
     issue = Issue.find(1)
-    Mailer.deliver_issue_add(issue)
+    Mailer.issue_add(issue).deliver
     mail = last_email
-    assert_equal issue.author.login, mail.header_string('X-Redmine-Sender')
+    assert_equal issue.author.login, mail.header['X-Redmine-Sender'].to_s
   end
 
   def test_plain_text_mail
     Setting.plain_text_mail = 1
     journal = Journal.find(2)
-    Mailer.deliver_issue_edit(journal)
+    Mailer.issue_edit(journal).deliver
     mail = last_email
-    assert_equal "text/plain", mail.content_type
+    assert_equal "text/plain; charset=UTF-8", mail.content_type
     assert_equal 0, mail.parts.size
     assert !mail.encoded.include?('href')
   end
@@ -188,7 +186,7 @@ class MailerTest < ActiveSupport::TestCase
   def test_html_mail
     Setting.plain_text_mail = 0
     journal = Journal.find(2)
-    Mailer.deliver_issue_edit(journal)
+    Mailer.issue_edit(journal).deliver
     mail = last_email
     assert_equal 2, mail.parts.size
     assert mail.encoded.include?('href')
@@ -196,45 +194,45 @@ class MailerTest < ActiveSupport::TestCase
 
   def test_from_header
     with_settings :mail_from => 'redmine@example.net' do
-      Mailer.deliver_test(User.find(1))
+      Mailer.test_email(User.find(1)).deliver
     end
     mail = last_email
-    assert_equal 'redmine@example.net', mail.from_addrs.first.address
+    assert_equal 'redmine@example.net', mail.from_addrs.first
   end
 
   def test_from_header_with_phrase
     with_settings :mail_from => 'Redmine app <redmine@example.net>' do
-      Mailer.deliver_test(User.find(1))
+      Mailer.test_email(User.find(1)).deliver
     end
     mail = last_email
-    assert_equal 'redmine@example.net', mail.from_addrs.first.address
-    assert_equal 'Redmine app', mail.from_addrs.first.name
+    assert_equal 'redmine@example.net', mail.from_addrs.first
+    assert_equal 'Redmine app <redmine@example.net>', mail.header['From'].to_s
   end
 
   def test_should_not_send_email_without_recipient
-    news = News.find(:first)
+    news = News.first
     user = news.author
     # Remove members except news author
     news.project.memberships.each {|m| m.destroy unless m.user == user}
 
-    user.pref[:no_self_notified] = false
+    user.pref.no_self_notified = false
     user.pref.save
     User.current = user
-    Mailer.deliver_news_added(news.reload)
+    Mailer.news_added(news.reload).deliver
     assert_equal 1, last_email.bcc.size
 
     # nobody to notify
-    user.pref[:no_self_notified] = true
+    user.pref.no_self_notified = true
     user.pref.save
     User.current = user
     ActionMailer::Base.deliveries.clear
-    Mailer.deliver_news_added(news.reload)
+    Mailer.news_added(news.reload).deliver
     assert ActionMailer::Base.deliveries.empty?
   end
 
   def test_issue_add_message_id
     issue = Issue.find(1)
-    Mailer.deliver_issue_add(issue)
+    Mailer.issue_add(issue).deliver
     mail = last_email
     assert_equal Mailer.message_id_for(issue), mail.message_id
     assert_nil mail.references
@@ -242,10 +240,10 @@ class MailerTest < ActiveSupport::TestCase
 
   def test_issue_edit_message_id
     journal = Journal.find(1)
-    Mailer.deliver_issue_edit(journal)
+    Mailer.issue_edit(journal).deliver
     mail = last_email
     assert_equal Mailer.message_id_for(journal), mail.message_id
-    assert_equal Mailer.message_id_for(journal.issue), mail.references.first.to_s
+    assert_include Mailer.message_id_for(journal.issue), mail.references
     assert_select_email do
       # link to the update
       assert_select "a[href=?]",
@@ -255,7 +253,7 @@ class MailerTest < ActiveSupport::TestCase
 
   def test_message_posted_message_id
     message = Message.find(1)
-    Mailer.deliver_message_posted(message)
+    Mailer.message_posted(message).deliver
     mail = last_email
     assert_equal Mailer.message_id_for(message), mail.message_id
     assert_nil mail.references
@@ -269,10 +267,10 @@ class MailerTest < ActiveSupport::TestCase
 
   def test_reply_posted_message_id
     message = Message.find(3)
-    Mailer.deliver_message_posted(message)
+    Mailer.message_posted(message).deliver
     mail = last_email
     assert_equal Mailer.message_id_for(message), mail.message_id
-    assert_equal Mailer.message_id_for(message.parent), mail.references.first.to_s
+    assert_include Mailer.message_id_for(message.parent), mail.references
     assert_select_email do
       # link to the reply
       assert_select "a[href=?]",
@@ -281,44 +279,40 @@ class MailerTest < ActiveSupport::TestCase
     end
   end
 
-  context("#issue_add") do
-    setup do
-      ActionMailer::Base.deliveries.clear
-      Setting.bcc_recipients = '1'
-      @issue = Issue.find(1)
-    end
+  test "#issue_add should notify project members" do
+    issue = Issue.find(1)
+    assert Mailer.issue_add(issue).deliver
+    assert last_email.bcc.include?('dlopper@somenet.foo')
+  end
 
-    should "notify project members" do
-      assert Mailer.deliver_issue_add(@issue)
-      assert last_email.bcc.include?('dlopper@somenet.foo')
-    end
+  test "#issue_add should not notify project members that are not allow to view the issue" do
+    issue = Issue.find(1)
+    Role.find(2).remove_permission!(:view_issues)
+    assert Mailer.issue_add(issue).deliver
+    assert !last_email.bcc.include?('dlopper@somenet.foo')
+  end
 
-    should "not notify project members that are not allow to view the issue" do
-      Role.find(2).remove_permission!(:view_issues)
-      assert Mailer.deliver_issue_add(@issue)
-      assert !last_email.bcc.include?('dlopper@somenet.foo')
-    end
+  test "#issue_add should notify issue watchers" do
+    issue = Issue.find(1)
+    user = User.find(9)
+    # minimal email notification options
+    user.pref.no_self_notified = '1'
+    user.pref.save
+    user.mail_notification = false
+    user.save
 
-    should "notify issue watchers" do
-      user = User.find(9)
-      # minimal email notification options
-      user.pref[:no_self_notified] = '1'
-      user.pref.save
-      user.mail_notification = false
-      user.save
+    Watcher.create!(:watchable => issue, :user => user)
+    assert Mailer.issue_add(issue).deliver
+    assert last_email.bcc.include?(user.mail)
+  end
 
-      Watcher.create!(:watchable => @issue, :user => user)
-      assert Mailer.deliver_issue_add(@issue)
-      assert last_email.bcc.include?(user.mail)
-    end
-
-    should "not notify watchers not allowed to view the issue" do
-      user = User.find(9)
-      Watcher.create!(:watchable => @issue, :user => user)
-      Role.non_member.remove_permission!(:view_issues)
-      assert Mailer.deliver_issue_add(@issue)
-      assert !last_email.bcc.include?(user.mail)
-    end
+  test "#issue_add should not notify watchers not allowed to view the issue" do
+    issue = Issue.find(1)
+    user = User.find(9)
+    Watcher.create!(:watchable => issue, :user => user)
+    Role.non_member.remove_permission!(:view_issues)
+    assert Mailer.issue_add(issue).deliver
+    assert !last_email.bcc.include?(user.mail)
   end
 
   # test mailer methods for each language
@@ -326,7 +320,7 @@ class MailerTest < ActiveSupport::TestCase
     issue = Issue.find(1)
     valid_languages.each do |lang|
       Setting.default_language = lang.to_s
-      assert Mailer.deliver_issue_add(issue)
+      assert Mailer.issue_add(issue).deliver
     end
   end
 
@@ -334,15 +328,55 @@ class MailerTest < ActiveSupport::TestCase
     journal = Journal.find(1)
     valid_languages.each do |lang|
       Setting.default_language = lang.to_s
-      assert Mailer.deliver_issue_edit(journal)
+      assert Mailer.issue_edit(journal).deliver
     end
+  end
+
+  def test_issue_edit_should_send_private_notes_to_users_with_permission_only
+    journal = Journal.find(1)
+    journal.private_notes = true
+    journal.save!
+
+    Role.find(2).add_permission! :view_private_notes
+    Mailer.issue_edit(journal).deliver
+    assert_equal %w(dlopper@somenet.foo jsmith@somenet.foo), ActionMailer::Base.deliveries.last.bcc.sort
+
+    Role.find(2).remove_permission! :view_private_notes
+    Mailer.issue_edit(journal).deliver
+    assert_equal %w(jsmith@somenet.foo), ActionMailer::Base.deliveries.last.bcc.sort
+  end
+
+  def test_issue_edit_should_send_private_notes_to_watchers_with_permission_only
+    Issue.find(1).set_watcher(User.find_by_login('someone'))
+    journal = Journal.find(1)
+    journal.private_notes = true
+    journal.save!
+
+    Role.non_member.add_permission! :view_private_notes
+    Mailer.issue_edit(journal).deliver
+    assert_include 'someone@foo.bar', ActionMailer::Base.deliveries.last.bcc.sort
+
+    Role.non_member.remove_permission! :view_private_notes
+    Mailer.issue_edit(journal).deliver
+    assert_not_include 'someone@foo.bar', ActionMailer::Base.deliveries.last.bcc.sort
+  end
+
+  def test_issue_edit_should_mark_private_notes
+    journal = Journal.find(2)
+    journal.private_notes = true
+    journal.save!
+
+    with_settings :default_language => 'en' do
+      Mailer.issue_edit(journal).deliver
+    end
+    assert_mail_body_match '(Private notes)', last_email
   end
 
   def test_document_added
     document = Document.find(1)
     valid_languages.each do |lang|
       Setting.default_language = lang.to_s
-      assert Mailer.deliver_document_added(document)
+      assert Mailer.document_added(document).deliver
     end
   end
 
@@ -350,13 +384,13 @@ class MailerTest < ActiveSupport::TestCase
     attachements = [ Attachment.find_by_container_type('Document') ]
     valid_languages.each do |lang|
       Setting.default_language = lang.to_s
-      assert Mailer.deliver_attachments_added(attachements)
+      assert Mailer.attachments_added(attachements).deliver
     end
   end
 
   def test_version_file_added
     attachements = [ Attachment.find_by_container_type('Version') ]
-    assert Mailer.deliver_attachments_added(attachements)
+    assert Mailer.attachments_added(attachements).deliver
     assert_not_nil last_email.bcc
     assert last_email.bcc.any?
     assert_select_email do
@@ -366,7 +400,7 @@ class MailerTest < ActiveSupport::TestCase
 
   def test_project_file_added
     attachements = [ Attachment.find_by_container_type('Project') ]
-    assert Mailer.deliver_attachments_added(attachements)
+    assert Mailer.attachments_added(attachements).deliver
     assert_not_nil last_email.bcc
     assert last_email.bcc.any?
     assert_select_email do
@@ -375,10 +409,10 @@ class MailerTest < ActiveSupport::TestCase
   end
 
   def test_news_added
-    news = News.find(:first)
+    news = News.first
     valid_languages.each do |lang|
       Setting.default_language = lang.to_s
-      assert Mailer.deliver_news_added(news)
+      assert Mailer.news_added(news).deliver
     end
   end
 
@@ -386,17 +420,17 @@ class MailerTest < ActiveSupport::TestCase
     comment = Comment.find(2)
     valid_languages.each do |lang|
       Setting.default_language = lang.to_s
-      assert Mailer.deliver_news_comment_added(comment)
+      assert Mailer.news_comment_added(comment).deliver
     end
   end
 
   def test_message_posted
-    message = Message.find(:first)
+    message = Message.first
     recipients = ([message.root] + message.root.children).collect {|m| m.author.mail if m.author}
     recipients = recipients.compact.uniq
     valid_languages.each do |lang|
       Setting.default_language = lang.to_s
-      assert Mailer.deliver_message_posted(message)
+      assert Mailer.message_posted(message).deliver
     end
   end
 
@@ -405,7 +439,12 @@ class MailerTest < ActiveSupport::TestCase
     valid_languages.each do |lang|
       Setting.default_language = lang.to_s
       assert_difference 'ActionMailer::Base.deliveries.size' do
-        assert Mailer.deliver_wiki_content_added(content)
+        assert Mailer.wiki_content_added(content).deliver
+        assert_select_email do
+          assert_select 'a[href=?]',
+            'http://mydomain.foo/projects/ecookbook/wiki/CookBook_documentation',
+            :text => 'CookBook documentation'
+        end
       end
     end
   end
@@ -415,7 +454,12 @@ class MailerTest < ActiveSupport::TestCase
     valid_languages.each do |lang|
       Setting.default_language = lang.to_s
       assert_difference 'ActionMailer::Base.deliveries.size' do
-        assert Mailer.deliver_wiki_content_updated(content)
+        assert Mailer.wiki_content_updated(content).deliver
+        assert_select_email do
+          assert_select 'a[href=?]',
+            'http://mydomain.foo/projects/ecookbook/wiki/CookBook_documentation',
+            :text => 'CookBook documentation'
+        end
       end
     end
   end
@@ -425,7 +469,7 @@ class MailerTest < ActiveSupport::TestCase
     valid_languages.each do |lang|
       user.update_attribute :language, lang.to_s
       user.reload
-      assert Mailer.deliver_account_information(user, 'pAsswORd')
+      assert Mailer.account_information(user, 'pAsswORd').deliver
     end
   end
 
@@ -434,7 +478,7 @@ class MailerTest < ActiveSupport::TestCase
     valid_languages.each do |lang|
       token.user.update_attribute :language, lang.to_s
       token.reload
-      assert Mailer.deliver_lost_password(token)
+      assert Mailer.lost_password(token).deliver
     end
   end
 
@@ -447,7 +491,7 @@ class MailerTest < ActiveSupport::TestCase
       token.user.update_attribute :language, lang.to_s
       token.reload
       ActionMailer::Base.deliveries.clear
-      assert Mailer.deliver_register(token)
+      assert Mailer.register(token).deliver
       mail = last_email
       assert_select_email do
         assert_select "a[href=?]",
@@ -461,7 +505,7 @@ class MailerTest < ActiveSupport::TestCase
     user = User.find(1)
     valid_languages.each do |lang|
       user.update_attribute :language, lang.to_s
-      assert Mailer.deliver_test(user)
+      assert Mailer.test_email(user).deliver
     end
   end
 
@@ -470,22 +514,23 @@ class MailerTest < ActiveSupport::TestCase
     assert_equal 1, ActionMailer::Base.deliveries.size
     mail = last_email
     assert mail.bcc.include?('dlopper@somenet.foo')
-    assert mail.body.include?('Bug #3: Error 281 when updating a recipe')
+    assert_mail_body_match 'Bug #3: Error 281 when updating a recipe', mail
     assert_equal '1 issue(s) due in the next 42 days', mail.subject
   end
 
   def test_reminders_should_not_include_closed_issues
     with_settings :default_language => 'en' do
-      Issue.generate!(:project_id => 1, :tracker_id => 1, :status_id => 5,
+      Issue.create!(:project_id => 1, :tracker_id => 1, :status_id => 5,
                       :subject => 'Closed issue', :assigned_to_id => 3,
-                      :due_date => 5.days.from_now)
+                      :due_date => 5.days.from_now,
+                      :author_id => 2)
       ActionMailer::Base.deliveries.clear
 
       Mailer.reminders(:days => 42)
       assert_equal 1, ActionMailer::Base.deliveries.size
       mail = last_email
       assert mail.bcc.include?('dlopper@somenet.foo')
-      assert !mail.body.include?('Closed issue')
+      assert_mail_body_no_match 'Closed issue', mail
     end
   end
 
@@ -496,13 +541,28 @@ class MailerTest < ActiveSupport::TestCase
     assert_equal 1, ActionMailer::Base.deliveries.size # No mail for dlopper
     mail = last_email
     assert mail.bcc.include?('dlopper@somenet.foo')
-    assert mail.body.include?('Bug #3: Error 281 when updating a recipe')
+    assert_mail_body_match 'Bug #3: Error 281 when updating a recipe', mail
   end
 
-  def last_email
-    mail = ActionMailer::Base.deliveries.last
-    assert_not_nil mail
-    mail
+  def test_reminder_should_include_issues_assigned_to_groups
+    with_settings :default_language => 'en' do
+      group = Group.generate!
+      group.users << User.find(2)
+      group.users << User.find(3)
+
+      Issue.create!(:project_id => 1, :tracker_id => 1, :status_id => 1,
+                      :subject => 'Assigned to group', :assigned_to => group,
+                      :due_date => 5.days.from_now,
+                      :author_id => 2)
+      ActionMailer::Base.deliveries.clear
+
+      Mailer.reminders(:days => 7)
+      assert_equal 2, ActionMailer::Base.deliveries.size
+      assert_equal %w(dlopper@somenet.foo jsmith@somenet.foo), ActionMailer::Base.deliveries.map(&:bcc).flatten.sort
+      ActionMailer::Base.deliveries.each do |mail|
+        assert_mail_body_match 'Assigned to group', mail
+      end
+    end
   end
 
   def test_mailer_should_not_change_locale
@@ -512,38 +572,108 @@ class MailerTest < ActiveSupport::TestCase
     # Send an email to a french user
     user = User.find(1)
     user.language = 'fr'
-    Mailer.deliver_account_activated(user)
+    Mailer.account_activated(user).deliver
     mail = last_email
-    assert mail.body.include?('Votre compte')
+    assert_mail_body_match 'Votre compte', mail
 
     assert_equal :it, current_language
   end
 
   def test_with_deliveries_off
     Mailer.with_deliveries false do
-      Mailer.deliver_test(User.find(1))
+      Mailer.test_email(User.find(1)).deliver
     end
     assert ActionMailer::Base.deliveries.empty?
     # should restore perform_deliveries
     assert ActionMailer::Base.perform_deliveries
   end
-  
-  def test_tmail_to_header_field_should_not_include_blank_lines
-    mail = TMail::Mail.new
-    mail.to = ["a.user@example.com", "v.user2@example.com", "e.smith@example.com", "info@example.com", "v.pupkin@example.com",
-      "b.user@example.com", "w.user2@example.com", "f.smith@example.com", "info2@example.com", "w.pupkin@example.com"]
-    
-    assert !mail.encoded.strip.split("\r\n").detect(&:blank?), "#{mail.encoded} malformed"
-  end
 
   def test_layout_should_include_the_emails_header
     with_settings :emails_header => "*Header content*" do
-      assert Mailer.deliver_test(User.find(1))
-      assert_select_email do
-        assert_select ".header" do
-          assert_select "strong", :text => "Header content"
+      with_settings :plain_text_mail => 0 do
+        assert Mailer.test_email(User.find(1)).deliver
+        assert_select_email do
+          assert_select ".header" do
+            assert_select "strong", :text => "Header content"
+          end
         end
       end
+      with_settings :plain_text_mail => 1 do
+        assert Mailer.test_email(User.find(1)).deliver
+        mail = last_email
+        assert_not_nil mail
+        assert_include "*Header content*", mail.body.decoded
+      end
     end
+  end
+
+  def test_layout_should_not_include_empty_emails_header
+    with_settings :emails_header => "", :plain_text_mail => 0 do
+      assert Mailer.test_email(User.find(1)).deliver
+      assert_select_email do
+        assert_select ".header", false
+      end
+    end
+  end
+
+  def test_layout_should_include_the_emails_footer
+    with_settings :emails_footer => "*Footer content*" do
+      with_settings :plain_text_mail => 0 do
+        assert Mailer.test_email(User.find(1)).deliver
+        assert_select_email do
+          assert_select ".footer" do
+            assert_select "strong", :text => "Footer content"
+          end
+        end
+      end
+      with_settings :plain_text_mail => 1 do
+        assert Mailer.test_email(User.find(1)).deliver
+        mail = last_email
+        assert_not_nil mail
+        assert_include "\n-- \n", mail.body.decoded
+        assert_include "*Footer content*", mail.body.decoded
+      end
+    end
+  end
+
+  def test_layout_should_not_include_empty_emails_footer
+    with_settings :emails_footer => "" do
+      with_settings :plain_text_mail => 0 do
+        assert Mailer.test_email(User.find(1)).deliver
+        assert_select_email do
+          assert_select ".footer", false
+        end
+      end
+      with_settings :plain_text_mail => 1 do
+        assert Mailer.test_email(User.find(1)).deliver
+        mail = last_email
+        assert_not_nil mail
+        assert_not_include "\n-- \n", mail.body.decoded
+      end
+    end
+  end
+
+  def test_should_escape_html_templates_only
+    Issue.generate!(:project_id => 1, :tracker_id => 1, :subject => 'Subject with a <tag>')
+    mail = last_email
+    assert_equal 2, mail.parts.size
+    assert_include '<tag>', text_part.body.encoded
+    assert_include '&lt;tag&gt;', html_part.body.encoded
+  end
+
+  private
+
+  def last_email
+    mail = ActionMailer::Base.deliveries.last
+    assert_not_nil mail
+    mail
+  end
+
+  def text_part
+    last_email.parts.detect {|part| part.content_type.include?('text/plain')}
+  end
+
+  def html_part
+    last_email.parts.detect {|part| part.content_type.include?('text/html')}
   end
 end

@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2011  Jean-Philippe Lang
+# Copyright (C) 2006-2013  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -62,15 +62,20 @@ class RepositoryFilesystemTest < ActiveSupport::TestCase
   if File.directory?(REPOSITORY_PATH)
     def test_fetch_changesets
       assert_equal 0, @repository.changesets.count
-      assert_equal 0, @repository.changes.count
+      assert_equal 0, @repository.filechanges.count
       @repository.fetch_changesets
       @project.reload
       assert_equal 0, @repository.changesets.count
-      assert_equal 0, @repository.changes.count
+      assert_equal 0, @repository.filechanges.count
     end
 
     def test_entries
-      assert_equal 3, @repository.entries("", 2).size
+      entries = @repository.entries("", 2)
+      assert_kind_of Redmine::Scm::Adapters::Entries, entries
+      assert_equal 3, entries.size
+    end
+
+    def test_entries_in_directory
       assert_equal 2, @repository.entries("dir", 3).size
     end
 

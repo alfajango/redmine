@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2011  Jean-Philippe Lang
+# Copyright (C) 2006-2013  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -19,7 +19,7 @@ require File.expand_path('../../test_helper', __FILE__)
 
 class WatcherTest < ActiveSupport::TestCase
   fixtures :projects, :users, :members, :member_roles, :roles, :enabled_modules,
-           :issues,
+           :issues, :issue_statuses, :enumerations, :trackers, :projects_trackers,
            :boards, :messages,
            :wikis, :wiki_pages,
            :watchers
@@ -81,6 +81,13 @@ class WatcherTest < ActiveSupport::TestCase
     assert issue.watched_by?(User.find(1))
   end
 
+  def test_watcher_user_ids_should_make_ids_uniq
+    issue = Issue.new(:project => Project.find(1), :tracker_id => 1, :subject => "test", :author => User.find(2))
+    issue.watcher_user_ids = ['1', '3', '1']
+    issue.save!
+    assert_equal 2, issue.watchers.count
+  end
+
   def test_addable_watcher_users
     addable_watcher_users = @issue.addable_watcher_users
     assert_kind_of Array, addable_watcher_users
@@ -90,6 +97,23 @@ class WatcherTest < ActiveSupport::TestCase
   def test_addable_watcher_users_should_not_include_user_that_cannot_view_the_object
     issue = Issue.new(:project => Project.find(1), :is_private => true)
     assert_nil issue.addable_watcher_users.detect {|user| !issue.visible?(user)}
+  end
+
+  def test_any_watched_should_return_false_if_no_object_is_watched
+    objects = (0..2).map {Issue.generate!}
+
+    assert_equal false, Watcher.any_watched?(objects, @user)
+  end
+
+  def test_any_watched_should_return_true_if_one_object_is_watched
+    objects = (0..2).map {Issue.generate!}
+    objects.last.add_watcher(@user)
+
+    assert_equal true, Watcher.any_watched?(objects, @user)
+  end
+
+  def test_any_watched_should_return_false_with_no_object
+    assert_equal false, Watcher.any_watched?([], @user)
   end
 
   def test_recipients
@@ -145,6 +169,14 @@ class WatcherTest < ActiveSupport::TestCase
     end
 
     assert Issue.find(1).watched_by?(user)
+    assert !Issue.find(4).watched_by?(user)
+  end
+
+  def test_prune_all
+    user = User.find(9)
+    Watcher.new(:watchable => Issue.find(4), :user => User.find(9)).save(:validate => false)
+
+    assert Watcher.prune > 0
     assert !Issue.find(4).watched_by?(user)
   end
 end

@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2011  Jean-Philippe Lang
+# Copyright (C) 2006-2013  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,7 +17,7 @@
 
 class AttachmentsController < ApplicationController
   before_filter :find_project, :except => :upload
-  before_filter :file_readable, :read_authorize, :only => [:show, :download]
+  before_filter :file_readable, :read_authorize, :only => [:show, :download, :thumbnail]
   before_filter :delete_authorize, :only => :destroy
   before_filter :authorize_global, :only => :upload
 
@@ -52,11 +52,26 @@ class AttachmentsController < ApplicationController
       @attachment.increment_download
     end
 
-    # images are sent inline
-    send_file @attachment.diskfile, :filename => filename_for_content_disposition(@attachment.filename),
-                                    :type => detect_content_type(@attachment),
-                                    :disposition => (@attachment.image? ? 'inline' : 'attachment')
+    if stale?(:etag => @attachment.digest)
+      # images are sent inline
+      send_file @attachment.diskfile, :filename => filename_for_content_disposition(@attachment.filename),
+                                      :type => detect_content_type(@attachment),
+                                      :disposition => (@attachment.image? ? 'inline' : 'attachment')
+    end
+  end
 
+  def thumbnail
+    if @attachment.thumbnailable? && thumbnail = @attachment.thumbnail(:size => params[:size])
+      if stale?(:etag => thumbnail)
+        send_file thumbnail,
+          :filename => filename_for_content_disposition(@attachment.filename),
+          :type => detect_content_type(@attachment),
+          :disposition => 'inline'
+      end
+    else
+      # No thumbnail for the attachment or thumbnail could not be created
+      render :nothing => true, :status => 404
+    end
   end
 
   def upload
@@ -67,28 +82,38 @@ class AttachmentsController < ApplicationController
       return
     end
 
-    @attachment = Attachment.new(:file => request.body)
+    @attachment = Attachment.new(:file => request.raw_post)
     @attachment.author = User.current
-    @attachment.filename = ActiveSupport::SecureRandom.hex(16)
+    @attachment.filename = params[:filename].presence || Redmine::Utils.random_hex(16)
+    saved = @attachment.save
 
-    if @attachment.save
-      respond_to do |format|
-        format.api { render :action => 'upload', :status => :created }
-      end
-    else
-      respond_to do |format|
-        format.api { render_validation_errors(@attachment) }
-      end
+    respond_to do |format|
+      format.js
+      format.api {
+        if saved
+          render :action => 'upload', :status => :created
+        else
+          render_validation_errors(@attachment)
+        end
+      }
     end
   end
 
-  verify :method => :delete, :only => :destroy
   def destroy
-    # Make sure association callbacks are called
-    @attachment.container.attachments.delete(@attachment)
-    redirect_to :back
-  rescue ::ActionController::RedirectBackError
-    redirect_to :controller => 'projects', :action => 'show', :id => @project
+    if @attachment.container.respond_to?(:init_journal)
+      @attachment.container.init_journal(User.current)
+    end
+    if @attachment.container
+      # Make sure association callbacks are called
+      @attachment.container.attachments.delete(@attachment)
+    else
+      @attachment.destroy
+    end
+
+    respond_to do |format|
+      format.html { redirect_to_referer_or project_path(@project) }
+      format.js
+    end
   end
 
 private
@@ -103,7 +128,12 @@ private
 
   # Checks that the file exists and is readable
   def file_readable
-    @attachment.readable? ? true : render_404
+    if @attachment.readable?
+      true
+    else
+      logger.error "Cannot send attachment, #{@attachment.diskfile} does not exist or is unreadable."
+      render_404
+    end
   end
 
   def read_authorize

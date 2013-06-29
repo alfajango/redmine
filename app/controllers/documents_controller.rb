@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2011  Jean-Philippe Lang
+# Copyright (C) 2006-2013  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -27,7 +27,7 @@ class DocumentsController < ApplicationController
 
   def index
     @sort_by = %w(category date title author).include?(params[:sort_by]) ? params[:sort_by] : 'category'
-    documents = @project.documents.find :all, :include => [:attachments, :category]
+    documents = @project.documents.includes(:attachments, :category).all
     case @sort_by
     when 'date'
       @grouped = documents.group_by {|d| d.updated_on.to_date }
@@ -43,20 +43,22 @@ class DocumentsController < ApplicationController
   end
 
   def show
-    @attachments = @document.attachments.find(:all, :order => "created_on DESC")
+    @attachments = @document.attachments.all
   end
 
   def new
-    @document = @project.documents.build(params[:document])
+    @document = @project.documents.build
+    @document.safe_attributes = params[:document]
   end
 
   def create
-    @document = @project.documents.build(params[:document])
+    @document = @project.documents.build
+    @document.safe_attributes = params[:document]
     @document.save_attachments(params[:attachments])
     if @document.save
       render_attachment_warning_if_needed(@document)
       flash[:notice] = l(:notice_successful_create)
-      redirect_to :action => 'index', :project_id => @project
+      redirect_to project_documents_path(@project)
     else
       render :action => 'new'
     end
@@ -66,9 +68,10 @@ class DocumentsController < ApplicationController
   end
 
   def update
-    if request.put? and @document.update_attributes(params[:document])
+    @document.safe_attributes = params[:document]
+    if request.put? and @document.save
       flash[:notice] = l(:notice_successful_update)
-      redirect_to :action => 'show', :id => @document
+      redirect_to document_path(@document)
     else
       render :action => 'edit'
     end
@@ -76,14 +79,16 @@ class DocumentsController < ApplicationController
 
   def destroy
     @document.destroy if request.delete?
-    redirect_to :controller => 'documents', :action => 'index', :project_id => @project
+    redirect_to project_documents_path(@project)
   end
 
   def add_attachment
     attachments = Attachment.attach_files(@document, params[:attachments])
     render_attachment_warning_if_needed(@document)
 
-    Mailer.deliver_attachments_added(attachments[:files]) if attachments.present? && attachments[:files].present? && Setting.notified_events.include?('document_added')
-    redirect_to :action => 'show', :id => @document
+    if attachments.present? && attachments[:files].present? && Setting.notified_events.include?('document_added')
+      Mailer.attachments_added(attachments[:files]).deliver
+    end
+    redirect_to document_path(@document)
   end
 end

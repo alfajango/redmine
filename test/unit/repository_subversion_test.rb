@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2011  Jean-Philippe Lang
+# Copyright (C) 2006-2013  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -20,13 +20,41 @@ require File.expand_path('../../test_helper', __FILE__)
 class RepositorySubversionTest < ActiveSupport::TestCase
   fixtures :projects, :repositories, :enabled_modules, :users, :roles
 
+  include Redmine::I18n
+
   NUM_REV = 11
 
   def setup
     @project = Project.find(3)
     @repository = Repository::Subversion.create(:project => @project,
-             :url => self.class.subversion_repository_url)
+                    :url => self.class.subversion_repository_url)
     assert @repository
+  end
+
+  def test_invalid_url
+    set_language_if_valid 'en'
+    ['invalid', 'http://', 'svn://', 'svn+ssh://', 'file://'].each do |url|
+      repo = Repository::Subversion.new(
+                            :project      => @project,
+                            :identifier   => 'test',
+                            :url => url
+                          )
+      assert !repo.save
+      assert_equal ["is invalid"], repo.errors[:url]
+    end
+  end
+
+  def test_valid_url
+    ['http://valid', 'svn://valid', 'svn+ssh://valid', 'file://valid'].each do |url|
+      repo = Repository::Subversion.new(
+                            :project      => @project,
+                            :identifier   => 'test',
+                            :url => url
+                          )
+      assert repo.save
+      assert_equal [], repo.errors[:url]
+      assert repo.destroy
+    end
   end
 
   if repository_configured?('subversion')
@@ -36,7 +64,7 @@ class RepositorySubversionTest < ActiveSupport::TestCase
       @project.reload
 
       assert_equal NUM_REV, @repository.changesets.count
-      assert_equal 20, @repository.changes.count
+      assert_equal 20, @repository.filechanges.count
       assert_equal 'Initial import.', @repository.changesets.find_by_revision('1').comments
     end
 
@@ -47,13 +75,23 @@ class RepositorySubversionTest < ActiveSupport::TestCase
       assert_equal NUM_REV, @repository.changesets.count
 
       # Remove changesets with revision > 5
-      @repository.changesets.find(:all).each {|c| c.destroy if c.revision.to_i > 5}
+      @repository.changesets.all.each {|c| c.destroy if c.revision.to_i > 5}
       @project.reload
       assert_equal 5, @repository.changesets.count
 
       @repository.fetch_changesets
       @project.reload
       assert_equal NUM_REV, @repository.changesets.count
+    end
+
+    def test_entries
+      entries = @repository.entries
+      assert_kind_of Redmine::Scm::Adapters::Entries, entries
+    end
+
+    def test_entries_for_invalid_path_should_return_nil
+      entries = @repository.entries('invalid_path')
+      assert_nil entries
     end
 
     def test_latest_changesets
@@ -99,7 +137,7 @@ class RepositorySubversionTest < ActiveSupport::TestCase
       @project.reload
 
       assert_equal 1, @repository.changesets.count, 'Expected to see 1 revision'
-      assert_equal 2, @repository.changes.count, 'Expected to see 2 changes, dir add and file add'
+      assert_equal 2, @repository.filechanges.count, 'Expected to see 2 changes, dir add and file add'
 
       entries = @repository.entries('')
       assert_not_nil entries, 'Expect to find entries'

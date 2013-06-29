@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2011  Jean-Philippe Lang
+# Copyright (C) 2006-2013  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -25,11 +25,7 @@ class ReportsControllerTest < ActionController::TestCase
            :member_roles,
            :members,
            :enabled_modules,
-           :workflows,
            :versions
-
-  def setup
-  end
 
   def test_get_issue_report
     get :issue_report, :id => 1
@@ -38,9 +34,11 @@ class ReportsControllerTest < ActionController::TestCase
     assert_template 'issue_report'
 
     [:issues_by_tracker, :issues_by_version, :issues_by_category, :issues_by_assigned_to,
-     :issues_by_author, :issues_by_subproject].each do |ivar|
+     :issues_by_author, :issues_by_subproject, :issues_by_priority].each do |ivar|
       assert_not_nil assigns(ivar)
     end
+
+    assert_equal IssuePriority.all.reverse, assigns(:priorities)
   end
 
   def test_get_issue_report_details
@@ -54,6 +52,11 @@ class ReportsControllerTest < ActionController::TestCase
       assert_not_nil assigns(:data)
       assert_not_nil assigns(:report_title)
     end
+  end
+
+  def test_get_issue_report_details_by_priority
+    get :issue_report_details, :id => 1, :detail => 'priority'
+    assert_equal IssuePriority.all.reverse, assigns(:rows)
   end
 
   def test_get_issue_report_details_with_an_invalid_detail

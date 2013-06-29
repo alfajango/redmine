@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2011  Jean-Philippe Lang
+# Copyright (C) 2006-2013  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -16,37 +16,36 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 module ActiveRecord
-  class Base
-    def self.find_ids(options={})
-      find_ids_with_associations(options)
+  module FinderMethods
+    def find_ids(*args)
+      find_ids_with_associations
+    end
+
+    private
+  
+    def find_ids_with_associations
+        join_dependency = construct_join_dependency_for_association_find
+        relation = construct_relation_for_association_find_ids(join_dependency)
+        rows = connection.select_all(relation, 'SQL', relation.bind_values)
+        rows.map {|row| row["id"].to_i}
+      rescue ThrowResult
+        []
+    end
+
+    def construct_relation_for_association_find_ids(join_dependency)
+      relation = except(:includes, :eager_load, :preload, :select).select("#{table_name}.id")
+      apply_join_dependency(relation, join_dependency)
     end
   end
+end
 
-  module Associations
-    module ClassMethods
-      def find_ids_with_associations(options = {})
-        catch :invalid_query do
-          join_dependency = ActiveRecord::Associations::ClassMethods::JoinDependency.new(self, merge_includes(scope(:find, :include), options[:include]), options[:joins])
-          return connection.select_values(construct_ids_finder_sql_with_included_associations(options, join_dependency)).map(&:to_i)
-        end
-        []
-      end
-
-      def construct_ids_finder_sql_with_included_associations(options, join_dependency)
-        scope = scope(:find)
-        sql = "SELECT #{table_name}.id FROM #{(scope && scope[:from]) || options[:from] || quoted_table_name} "
-        sql << join_dependency.join_associations.collect{|join| join.association_join }.join
-
-        add_joins!(sql, options[:joins], scope)
-        add_conditions!(sql, options[:conditions], scope)
-        add_limited_ids_condition!(sql, options, join_dependency) if !using_limitable_reflections?(join_dependency.reflections) && ((scope && scope[:limit]) || options[:limit])
-
-        add_group!(sql, options[:group], options[:having], scope)
-        add_order!(sql, options[:order], scope)
-        add_limit!(sql, options, scope) if using_limitable_reflections?(join_dependency.reflections)
-        add_lock!(sql, options, scope)
-
-        return sanitize_sql(sql)
+class DateValidator < ActiveModel::EachValidator
+  def validate_each(record, attribute, value)
+    before_type_cast = record.attributes_before_type_cast[attribute.to_s]
+    if before_type_cast.is_a?(String) && before_type_cast.present?
+      # TODO: #*_date_before_type_cast returns a Mysql::Time with ruby1.8+mysql gem
+      unless before_type_cast =~ /\A\d{4}-\d{2}-\d{2}( 00:00:00)?\z/ && value
+        record.errors.add attribute, :not_a_date
       end
     end
   end
