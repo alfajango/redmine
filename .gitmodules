@@ -7,9 +7,6 @@
 [submodule "public/themes/pixel-cookers"]
 	path = public/themes/pixel-cookers
 	url = git://github.com/pixel-cookers/RedmineThemePixelCookers.git
-[submodule "plugins/redmine-mention-plugin"]
-	path = plugins/redmine-mention-plugin
-	url = https://github.com/steply/redmine-mention-plugin.git
 [submodule "plugins/redmine_better_gantt_chart"]
 	path = plugins/redmine_better_gantt_chart
 	url = https://github.com/kulesa/redmine_better_gantt_chart.git
