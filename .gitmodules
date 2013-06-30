@@ -1,21 +1,15 @@
 [submodule "vendor/plugins/redmine_s3"]
-	path = vendor/plugins/redmine_s3
-	url = git://github.com/JangoSteve/redmine_s3.git
+  path = vendor/plugins/redmine_s3
+  url = git://github.com/JangoSteve/redmine_s3.git
 [submodule "public/themes/pepper"]
-	path = public/themes/pepper
-	url = git://github.com/koppen/redmine-pepper-theme.git
+  path = public/themes/pepper
+  url = git://github.com/koppen/redmine-pepper-theme.git
 [submodule "public/themes/pixel-cookers"]
-	path = public/themes/pixel-cookers
-	url = git://github.com/pixel-cookers/RedmineThemePixelCookers.git
-[submodule "vendor/plugins/redmine_user_status"]
-	path = vendor/plugins/redmine_user_status
-	url = git://github.com/bthesorceror/redmine_user_status.git
-[submodule "vendor/plugins/redmine-mention-plugin"]
-	path = vendor/plugins/redmine-mention-plugin
-	url = https://github.com/steply/redmine-mention-plugin.git
-[submodule "vendor/plugins/redmine_better_gantt_chart"]
-	path = vendor/plugins/redmine_better_gantt_chart
-	url = https://github.com/kulesa/redmine_better_gantt_chart.git
+  path = public/themes/pixel-cookers
+  url = git://github.com/pixel-cookers/RedmineThemePixelCookers.git
+[submodule "plugins/redmine_better_gantt_chart"]
+  path = plugins/redmine_better_gantt_chart
+  url = https://github.com/kulesa/redmine_better_gantt_chart.git
 [submodule "vendor/plugins/stuff_to_do_plugin"]
-	path = vendor/plugins/stuff_to_do_plugin
-	url = git://github.com/edavis10/redmine-stuff-to-do-plugin.git
+  path = vendor/plugins/stuff_to_do_plugin
+  url = git://github.com/edavis10/redmine-stuff-to-do-plugin.git
