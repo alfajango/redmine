@@ -1,24 +1,39 @@
 // TODO: JSUnit test this
 jQuery(function($) {
+	
     $("#user_id").change(function() {  $("form#user_switch").submit();  });
     $("#ajax-indicator").ajaxStart(function(){ $(this).show();  });
     $("#ajax-indicator").ajaxStop(function(){ $(this).hide();  });
 
     $("#filter").change(function() {
-        if ($('#filter').val() != '') {
-            $.ajax({
-                type: "GET",
-                url: 'stuff_to_do/available_issues.js',
-                data: $('#filter').serialize(),
-                success: function(response) {
-                    $('#available-pane').html(response);
-                    attachSortables();
-                },
-                error: function(response) {
-                    $("div.error").html("Error filtering pane.  Please refresh the page.").show();
-                }});
-        }
-    });
+	    $.ajax({
+	        type: "GET",
+	        url: 'stuff_to_do/available_issues.js',
+	        dataType: 'html',
+	        data: { filter : $('#filter').val(), user_id : $('#user_id').val(), project_id : $('#project_id').val() },
+	        success: function(response) {
+	            $('#available-pane').html(response);
+	            attachSortables();
+	        },
+	        error: function(response) {
+	            $("div.error").html("Error filtering pane.  Please refresh the page.").show();
+	            }});
+	});
+    
+    $("#project_id").change(function() {
+        $.ajax({
+            type: "GET",
+            url: 'stuff_to_do/available_issues.js',
+            dataType: 'html',
+            data: { filter : $('#filter').val(), user_id : $('#user_id').val(), project_id : $('#project_id').val() },
+            success: function(response) {
+                $('#available-pane').html(response);
+                attachSortables();
+            },
+            error: function(response) {
+                $("div.error").html("Error filtering pane.  Please refresh the page.").show();
+            }});
+	});
 
   attachSortables = function() {
     $("#available").sortable({
@@ -82,12 +97,17 @@ jQuery(function($) {
     if (filter != null) {
         data = data + '&filter=' + filter;
     }
+    
+    if (project_id != null) {
+    	data = data + '&project_id=' + project_id;
+    }
 
     data = addAuthenticityToken(data);
 
     $.ajax({
         type: "POST",
         url: 'stuff_to_do/reorder.js',
+        dataType: 'html',
         data: data,
         success: function(response) {
             $('#panes').html(response);
@@ -103,6 +123,7 @@ jQuery(function($) {
         $.ajax({
             type: "POST",
             url: 'stuff_to_do/add_to_time_grid.js',
+            dataType: 'html',
             data: addAuthenticityToken('issue_id=' + getRecordId(issue) + '&' + $('#query_form').serialize()),
             success: function(response) {
                 $('#time-grid').html(response);
@@ -117,6 +138,7 @@ jQuery(function($) {
         $.ajax({
             type: "POST",
             url: 'stuff_to_do/remove_from_time_grid.js',
+            dataType: 'html',
             data: addAuthenticityToken('issue_id=' + getRecordId(issue) + '&' + $('#query_form').serialize()),
             success: function(response) {
                 $('#time-grid').html(response);
@@ -185,6 +207,7 @@ jQuery(function($) {
         $.ajax({
             type: "POST",
             url: 'stuff_to_do/save_time_entry.js',
+            dataType: 'html',
             data: addAuthenticityToken($(form).serialize()),
             success: function(response) {
                 $('#time-grid').before(response).remove();
