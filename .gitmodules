@@ -9,4 +9,4 @@
 	url = git://github.com/pixel-cookers/RedmineThemePixelCookers.git
 [submodule "plugins/stuff_to_do_plugin"]
 	path = plugins/stuff_to_do_plugin
-	url = git://github.com/edavis10/redmine-stuff-to-do-plugin.git
+	url = git://github.com/ande3577/redmine-stuff-to-do-plugin.git
