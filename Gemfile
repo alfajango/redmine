@@ -2,6 +2,7 @@ source 'https://rubygems.org'
 
 gem "rails", "4.1.8"
 gem "jquery-rails", "~> 3.1.1"
+gem 'thin'
 gem "coderay", "~> 1.1.0"
 gem "builder", ">= 3.0.4"
 gem "request_store", "1.0.5"
