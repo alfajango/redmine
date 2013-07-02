@@ -8,6 +8,7 @@ gem "rails", "4.2.7.1"
 gem "addressable", "2.4.0" if RUBY_VERSION < "2.0"
 gem "jquery-rails", "~> 3.1.4"
 gem "coderay", "~> 1.1.1"
+gem 'thin'
 gem "builder", ">= 3.0.4"
 gem "request_store", "1.0.5"
 gem "mime-types", (RUBY_VERSION >= "2.0" ? "~> 3.0" : "~> 2.99")
@@ -20,7 +21,7 @@ gem "mimemagic"
 # Request at least nokogiri 1.6.7.2 because of security advisories
 gem "nokogiri", ">= 1.6.7.2"
 
-# Request at least rails-html-sanitizer 1.0.3 because of security advisories 
+# Request at least rails-html-sanitizer 1.0.3 because of security advisories
 gem "rails-html-sanitizer", ">= 1.0.3"
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
