@@ -117,7 +117,7 @@ class Tracker < ActiveRecord::Base
     @disabled_core_fields ||=
       CORE_FIELDS.select do
         i += 1
-        (fields_bits || 0) & (1 << i) != 0
+        (fields_bits.to_i || 0) & (1 << i) != 0
       end
   end
 
