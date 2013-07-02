@@ -69,7 +69,7 @@ class Tracker < ActiveRecord::Base
 
   def disabled_core_fields
     i = -1
-    @disabled_core_fields ||= CORE_FIELDS.select { i += 1; (fields_bits || 0) & (2 ** i) != 0}
+    @disabled_core_fields ||= CORE_FIELDS.select { i += 1; (fields_bits.to_i || 0) & (2 ** i) != 0}
   end
 
   def core_fields
