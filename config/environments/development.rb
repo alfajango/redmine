@@ -17,6 +17,8 @@ Rails.application.configure do
 
   # Disable delivery errors
   config.action_mailer.raise_delivery_errors = false
+  config.action_mailer.default_url_options = { :host => ENV['URL'] }
+  config.action_mailer.asset_host = "https://#{ENV['URL']}"
 
   # Print deprecation notices to stderr and the Rails logger.
   config.active_support.deprecation = [:stderr, :log]
