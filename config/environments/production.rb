@@ -16,6 +16,11 @@ Rails.application.configure do
   config.consider_all_requests_local = false
   config.action_controller.perform_caching = true
 
+  # Enable serving of images, stylesheets, and javascripts from an asset server
+  # config.action_controller.asset_host                  = "http://assets.example.com"
+  config.action_mailer.default_url_options = { :host => ENV['URL'] }
+  config.action_mailer.asset_host = { :host => ENV['URL'] }
+
   # Disable delivery errors
   config.action_mailer.raise_delivery_errors = false
 
