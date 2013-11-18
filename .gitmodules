@@ -12,4 +12,4 @@
   url = https://github.com/kulesa/redmine_better_gantt_chart.git
 [submodule "plugins/stuff_to_do_plugin"]
   path = plugins/stuff_to_do_plugin
-  url = git://github.com/edavis10/redmine-stuff-to-do-plugin.git
+  url = git://github.com/JangoSteve/redmine-stuff-to-do-plugin.git
