@@ -6,7 +6,8 @@
   url = git://github.com/koppen/redmine-pepper-theme.git
 [submodule "public/themes/pixel-cookers"]
   path = public/themes/pixel-cookers
-  url = git://github.com/pixel-cookers/RedmineThemePixelCookers.git
+  url = git://github.com/alfajango/redmine-theme.git
+  branch = alfajango
 [submodule "plugins/redmine_better_gantt_chart"]
   path = plugins/redmine_better_gantt_chart
   url = https://github.com/kulesa/redmine_better_gantt_chart.git
