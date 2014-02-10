@@ -1,4 +1,16 @@
+GIT
+  remote: https://github.com/alfajango/cashboard-rb.git
+  revision: b527314d49460bd6e8acb92204924d0bda5eccb7
+  branch: project-list
+  specs:
+    cashboard (1.0.2)
+      activesupport (>= 3.0)
+      httparty (>= 0.6.1)
+      i18n
+      xml-simple (>= 1.0.12)
+
 GEM
+  remote: https://rubygems.org/
   remote: https://rubygems.org/
   remote: https://rubygems.org/
   specs:
@@ -62,6 +74,9 @@ GEM
     hashie (1.2.0)
     hike (1.2.3)
     http_parser.rb (0.5.3)
+    httparty (0.11.0)
+      multi_json (~> 1.0)
+      multi_xml (>= 0.5.2)
     i18n (0.6.9)
     journey (1.0.4)
     jquery-rails (2.0.3)
@@ -77,6 +92,7 @@ GEM
     mocha (0.14.0)
       metaclass (~> 0.0.1)
     multi_json (1.8.4)
+    multi_xml (0.5.5)
     multipart-post (1.2.0)
     net-ldap (0.3.1)
     nokogiri (1.6.0)
@@ -157,6 +173,7 @@ GEM
     tzinfo (0.3.38)
     uuidtools (2.1.4)
     websocket (1.0.7)
+    xml-simple (1.1.3)
     xpath (2.0.0)
       nokogiri (~> 1.3)
     yard (0.8.6.2)
@@ -172,6 +189,7 @@ DEPENDENCIES
   aws-sdk
   builder (= 3.0.0)
   capybara (~> 2.1.0)
+  cashboard!
   coderay (~> 1.1.0)
   fastercsv (~> 1.5.0)
   jquery-rails (~> 2.0.2)
