@@ -17,3 +17,6 @@
 [submodule "plugins/cashboard_tasks"]
   path = plugins/cashboard_tasks
   url = https://github.com/alfajango/redmine-cashboard-tasks.git
+[submodule "plugins/redmine_lightbox"]
+  path = plugins/redmine_lightbox
+  url = git@github.com:zipme/redmine_lightbox.git
