@@ -26,3 +26,9 @@
 [submodule "plugins/redmine_schedules"]
   path = plugins/redmine_schedules
   url = git@github.com:bradbeattie/redmine-schedules-plugin.git
+[submodule "plugins/redmine_dashboard"]
+  path = plugins/redmine_dashboard
+  url = https://github.com/jgraichen/redmine_dashboard.git
+[submodule "plugins/redmine_schedules"]
+  path = plugins/redmine_schedules
+  url = https://github.com/bradbeattie/redmine-schedules-plugin.git
