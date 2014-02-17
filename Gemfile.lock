@@ -1,4 +1,10 @@
 GIT
+  remote: git://github.com/alexdunae/holidays.git
+  revision: 9f55c94e0364f66926cda88d5a52d5a7141af53f
+  specs:
+    holidays (1.0.7.pre)
+
+GIT
   remote: https://github.com/alfajango/cashboard-rb.git
   revision: b527314d49460bd6e8acb92204924d0bda5eccb7
   branch: project-list
@@ -262,6 +268,7 @@ DEPENDENCIES
   fuubar
   guard-rspec
   haml
+  holidays!
   jquery-rails (~> 2.0.2)
   json
   method_decorators
