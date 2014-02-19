@@ -4,13 +4,14 @@ ol#available { overflow-y:auto; height: 500px; }
 ol#recommended { overflow-y:auto; height: 300px; }
 li.issue, li.project { cursor: move; }
 li.project { font-weight: bold; }
-div.pane h3 { color: #507AAA; }
+div.pane h3 { margin-top: 20px; }
 span.subtitle { font-size: smaller; color: #CCCCCC }
 div.pane ol { list-style: none; padding-left: 15px;}
 div.pane ol li { padding: 1px 0; }
 div.pane ol li:hover { background-color:#ffffdd; }
 div.pane ol li.empty-list { background-color:#FFFFEE; padding:100px; text-align:center; font-style:italic; }
-div.menu { float:right; text-align: right; }
+div.menu .user { float: left; }
+div.menu .filter { float: right; }
 
 .drop-accepted { background-color:#FFFFEE; height: 16px; width: 100%; border: 1px solid #000000; }
 
@@ -27,8 +28,10 @@ div.pane-summary table.progress { float: right; margin: 1px 6px;}
 #day_grid th { background: #eee; padding: 5px 8px; }
 #day_grid td { width: 14.2%; }
 #day_grid td ol.day_grid_day { background-color:#FFFFEE; height: 400px; border: solid 1px #eee; list-style: none; padding-left: 0; }
-#day_grid td li.stuff-to-do-item { background: #D8F3BC; border: solid 1px #999; box-sizing: border-box; padding: 5px 8px; overflow: hidden; }
-#day_grid td li.stuff-to-do-item:hover { overflow: visible; }
+#day_grid td li.stuff-to-do-item { overflow: hidden; box-sizing: border-box; margin: 5px; clear: both; border-bottom: solid 1px; }
+#day_grid td li.stuff-to-do-item:hover { overflow: visible; border-bottom: none; }
+#day_grid td li.stuff-to-do-item div.stuff-to-do-inner { background: #D8F3BC; border: solid 1px #999; border-bottom: none; padding: 5px 8px; width: 100%; background: inherit; min-height: 100%; box-sizing: border-box; position: relative; /* needed for chrome rendering bug when unhovering */ }
+#day_grid td li.stuff-to-do-item:hover div.stuff-to-do-inner { overflow: visible; border-bottom: solid 1px; position: absolute; z-index: 10; }
 #day_grid td li.stuff-to-do-item div.issue-details { width: 100%; background: inherit; }
 #day_grid td div.progress { float: none; display: block; width: 100%; margin: 0; }
 #day_grid td table.progress { border: solid 1px #aaa; }
