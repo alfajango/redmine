@@ -149,7 +149,8 @@ jQuery(function($) {
     var project = el.find('[data-project]').data('project');
 
     calculateHeight(el);
-    el.css(generateCssSeriesColor(project));
+    el.find('.stuff-to-do-inner').css(generateCssSeriesColor(project));
+    el.css({'border-color': generateCssSeriesColor(project)['border-color']});
 
     el.resizable({
       handles: 's',
@@ -306,9 +307,10 @@ jQuery(function($) {
 });
 
 var projectColors = {},
-    saturation = 0.08,
+    saturation = 0.12,
     value = 0.98; // aka brightness
     hue = 0.65; // or mix it up with Math.random()
+    borderSaturationDarkerBy = 0.45;
 
 var GOLDEN_RATIO = 0.618033988749895;
 
@@ -337,7 +339,7 @@ function generateCssSeriesColor(project) {
     hue %= 1;
     projectColors[project] = {
       background: "rgb(" + hsvToRgb(hue, saturation, value) + ")",
-      'border-color': "rgb(" + hsvToRgb(hue, saturation + 0.35, value) + ")"
+      'border-color': "rgb(" + hsvToRgb(hue, saturation + borderSaturationDarkerBy, value) + ")"
     };
   }
   return projectColors[project];
