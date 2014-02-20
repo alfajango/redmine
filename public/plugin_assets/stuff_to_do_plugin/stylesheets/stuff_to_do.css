@@ -31,7 +31,7 @@ div.pane-summary table.progress { float: right; margin: 1px 6px;}
 #day_grid td li.stuff-to-do-item { overflow: hidden; box-sizing: border-box; margin: 5px; clear: both; border-bottom: solid 1px; }
 #day_grid td li.stuff-to-do-item:hover { overflow: visible; border-bottom: none; }
 #day_grid td li.stuff-to-do-item div.stuff-to-do-inner { background: #D8F3BC; border: solid 1px #999; border-bottom: none; padding: 5px 8px; width: 100%; background: inherit; min-height: 100%; box-sizing: border-box; position: relative; /* needed for chrome rendering bug when unhovering */ }
-#day_grid td li.stuff-to-do-item:hover div.stuff-to-do-inner { overflow: visible; border-bottom: solid 1px; position: absolute; z-index: 10; }
+#day_grid td li.stuff-to-do-item:hover div.stuff-to-do-inner { overflow: visible; border-bottom: solid 1px; position: absolute; z-index: 10; -moz-box-shadow: 0px 2px 3px #999; -webkit-box-shadow: 0px 2px 3px #999; box-shadow: 0px 2px 3px #999; }
 #day_grid td li.stuff-to-do-item div.issue-details { width: 100%; background: inherit; }
 #day_grid td div.progress { float: none; display: block; width: 100%; margin: 0; }
 #day_grid td table.progress { border: solid 1px #aaa; }
