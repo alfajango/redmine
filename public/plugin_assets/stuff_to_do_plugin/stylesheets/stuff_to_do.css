@@ -4,14 +4,13 @@ ol#available { overflow-y:auto; height: 500px; }
 ol#recommended { overflow-y:auto; height: 300px; }
 li.issue, li.project { cursor: move; }
 li.project { font-weight: bold; }
-div.pane h3 { margin-top: 20px; }
+div.pane h3 { color: #507AAA; }
 span.subtitle { font-size: smaller; color: #CCCCCC }
 div.pane ol { list-style: none; padding-left: 15px;}
 div.pane ol li { padding: 1px 0; }
 div.pane ol li:hover { background-color:#ffffdd; }
 div.pane ol li.empty-list { background-color:#FFFFEE; padding:100px; text-align:center; font-style:italic; }
-div.menu .user { float: left; }
-div.menu .filter { float: right; }
+div.menu { float:right; text-align: right; }
 
 .drop-accepted { background-color:#FFFFEE; height: 16px; width: 100%; border: 1px solid #000000; }
 
@@ -37,6 +36,9 @@ div.pane-summary table.progress { float: right; margin: 1px 6px;}
 #day_grid td table.progress { border: solid 1px #aaa; }
 #day_grid td div.issue-details, #day_grid td div.project-details { display: block; float: none; }
 #day_grid td li.stuff-to-do-item div.estimate { left: auto; top: auto; width: auto; overflow: initial; }
+.remove-from-day-grid { display: none; }
+#day_grid .remove-from-day-grid { position: absolute; right: 4px; z-index: 1; top: 0; }
+#day_grid td li.stuff-to-do-item:hover .remove-from-day-grid { display: block; }
 #day-grid-week-links { text-align: center; }
 #day-grid-prev { float: left; }
 #day-grid-current { margin-left: -2em; }
