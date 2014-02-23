@@ -118,6 +118,9 @@ jQuery(function($) {
 
           saveDays(ui.item.parent());
         },
+        receive: function(event, ui) {
+          prependCloseLink(ui.item);
+        },
         remove: function(event, ui) {
           // target of event is .day_grid_day from which ui was removed
           saveDays($(event.target));
@@ -139,11 +142,34 @@ jQuery(function($) {
             el.attr('data-hours', stuffDay.hours);
           }
 
+          prependCloseLink(el);
           calculateAndResize(el);
         });
       });
     }
   },
+
+  prependCloseLink = function(item) {
+    var closeLink = $('<a></a>', {
+                      html: 'x',
+                      href: '#',
+                      'class': 'remove-from-day-grid',
+                      click: function(e) {
+                        console.log('click');
+                        removeFromDay(item);
+                        e.preventDefault();
+                      }
+                    });
+    item.find('.stuff-to-do-inner').prepend(closeLink);
+  },
+
+  removeFromDay = function(item) {
+    console.log('removing', item);
+    var parent = item.parent();
+
+    item.remove();
+    saveDays(parent);
+  };
 
   calculateAndResize = function(el) {
     var project = el.find('[data-project]').data('project');
