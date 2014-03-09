@@ -11,9 +11,6 @@
 [submodule "plugins/redmine_better_gantt_chart"]
   path = plugins/redmine_better_gantt_chart
   url = https://github.com/kulesa/redmine_better_gantt_chart.git
-[submodule "plugins/stuff_to_do_plugin"]
-  path = plugins/stuff_to_do_plugin
-  url = git://github.com/JangoSteve/redmine-stuff-to-do-plugin.git
 [submodule "plugins/cashboard_tasks"]
   path = plugins/cashboard_tasks
   url = https://github.com/alfajango/redmine-cashboard-tasks.git
