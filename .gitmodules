@@ -23,3 +23,7 @@
 [submodule "plugins/redmine_schedules"]
 	path = plugins/redmine_schedules
 	url = https://github.com/bradbeattie/redmine-schedules-plugin.git
+[submodule "plugins/redmine_etherpad"]
+	path = plugins/redmine_etherpad
+	url = https://github.com/alfajango/redmine_etherpad.git
+  branch = alfajango
