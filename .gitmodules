@@ -17,15 +17,13 @@
 [submodule "plugins/redmine_lightbox"]
   path = plugins/redmine_lightbox
   url = git@github.com:zipme/redmine_lightbox.git
-[submodule "plugins/redmine_dashboard"]
-  path = plugins/redmine_dashboard
-  url = git@github.com:jgraichen/redmine_dashboard.git
 [submodule "plugins/redmine_schedules"]
   path = plugins/redmine_schedules
   url = git@github.com:bradbeattie/redmine-schedules-plugin.git
 [submodule "plugins/redmine_dashboard"]
   path = plugins/redmine_dashboard
   url = https://github.com/jgraichen/redmine_dashboard.git
-[submodule "plugins/redmine_schedules"]
-  path = plugins/redmine_schedules
-  url = https://github.com/bradbeattie/redmine-schedules-plugin.git
+[submodule "plugins/redmine_etherpad"]
+  path = plugins/redmine_etherpad
+  url = https://github.com/alfajango/redmine_etherpad.git
+  branch = alfajango
