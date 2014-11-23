@@ -17,9 +17,6 @@
 [submodule "plugins/redmine_lightbox"]
 	path = plugins/redmine_lightbox
 	url = https://github.com/zipme/redmine_lightbox.git
-[submodule "plugins/redmine_dashboard"]
-	path = plugins/redmine_dashboard
-	url = https://github.com/jgraichen/redmine_dashboard.git
 [submodule "plugins/redmine_schedules"]
 	path = plugins/redmine_schedules
 	url = https://github.com/alfajango/redmine-schedules-plugin.git
