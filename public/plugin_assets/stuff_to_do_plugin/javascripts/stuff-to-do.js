@@ -130,7 +130,7 @@ jQuery(function($) {
     if (typeof stuffHours !== 'undefined') {
       $.map(stuffHours, function(items, day) {
         $.map(items, function(item) {
-          var stuffDay = item.stuff_to_do_day,
+          var stuffDay = item,
               id = '#stuff_', el, project;
 
           if (stuffDay.type === 'Project') { id += 'project'; }
