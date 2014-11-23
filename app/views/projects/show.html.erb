@@ -27,6 +27,11 @@
   <p class="warning"><span class="icon icon-lock"><%= l(:text_project_closed) %></span></p>
 <% end %>
 
+<% if @project.description.present? %>
+<div class="wiki">
+  <%= textilizable @project.description %>
+</div>
+<% end %>
 <div class="splitcontent">
 <div class="splitcontentleft">
   <% if @project.description.present? %>
