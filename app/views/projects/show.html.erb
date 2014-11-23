@@ -17,12 +17,12 @@
   <p class="warning"><span class="icon icon-lock"><%= l(:text_project_closed) %></span></p>
 <% end %>
 
+<% if @project.description.present? %>
+<div class="wiki">
+  <%= textilizable @project.description %>
+</div>
+<% end %>
 <div class="splitcontentleft">
-  <% if @project.description.present? %>
-  <div class="wiki">
-    <%= textilizable @project.description %>
-  </div>
-  <% end %>
   <% if @project.homepage.present? || @subprojects.any? || @project.visible_custom_field_values.any? { |custom_value| custom_value.value.present? } %>
   <ul>
   <% unless @project.homepage.blank? %>
