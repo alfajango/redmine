@@ -16,7 +16,7 @@
   url = https://github.com/alfajango/redmine-cashboard-tasks.git
 [submodule "plugins/redmine_lightbox"]
   path = plugins/redmine_lightbox
-  url = git@github.com:zipme/redmine_lightbox.git
+  url = https://github.com/zipme/redmine_lightbox.git
 [submodule "plugins/redmine_schedules"]
   path = plugins/redmine_schedules
   url = https://github.com/alfajango/redmine-schedules-plugin.git
