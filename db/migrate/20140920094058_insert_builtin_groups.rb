@@ -4,11 +4,13 @@ class InsertBuiltinGroups < ActiveRecord::Migration[4.2]
 
     unless GroupAnonymous.any?
       g = GroupAnonymous.new(:lastname => 'Anonymous users')
+      g.mail_notification = false
       g.status = 1
       g.save :validate => false
     end
     unless GroupNonMember.any?
       g = GroupNonMember.new(:lastname => 'Non member users')
+      g.mail_notification = false
       g.status = 1
       g.save :validate => false
     end
