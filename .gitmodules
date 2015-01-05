@@ -29,4 +29,4 @@
   branch = alfajango
 [submodule "plugins/redmine_mentions"]
 	path = plugins/redmine_mentions
-	url = https://github.com/arkhitech/redmine_mentions.git
+	url = https://github.com/alfajango/redmine_mentions.git
