@@ -30,3 +30,6 @@
 [submodule "plugins/redmine_mentions"]
 	path = plugins/redmine_mentions
 	url = https://github.com/alfajango/redmine_mentions.git
+[submodule "plugins/scrum2b"]
+	path = plugins/scrum2b
+  url = git@github.com:alfajango/scrum2b.git
