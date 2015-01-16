@@ -3,7 +3,7 @@
 
 function addFile(inputEl, file, eagerUpload) {
 
-  if ($('#attachments_fields').children().length < 10) {
+  if ($('#attachments_fields').children().length < 30) {
 
     var attachmentId = addFile.nextAttachmentId++;
 
