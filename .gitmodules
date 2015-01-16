@@ -36,3 +36,6 @@
 [submodule "plugins/redmine_dashboard"]
 	path = plugins/redmine_dashboard
   url = https://github.com/alfajango/redmine_dashboard.git
+[submodule "plugins/redmine_embedded_video"]
+	path = plugins/redmine_embedded_video
+	url = https://github.com/cforce/redmine_embedded_video.git
