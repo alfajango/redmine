@@ -4,7 +4,7 @@
 function addFile(inputEl, file, eagerUpload) {
   var attachmentsFields = $(inputEl).closest('.attachments_form').find('.attachments_fields');
   var addAttachment = $(inputEl).closest('.attachments_form').find('.add_attachment');
-  var maxFiles = ($(inputEl).attr('multiple') == 'multiple' ? 10 : 1);
+  var maxFiles = ($(inputEl).attr('multiple') == 'multiple' ? 30 : 1);
 
   if (attachmentsFields.children().length < maxFiles) {
     var attachmentId = addFile.nextAttachmentId++;
