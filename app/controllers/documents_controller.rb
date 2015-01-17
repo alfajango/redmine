@@ -22,6 +22,8 @@ class DocumentsController < ApplicationController
   before_filter :find_model_object, :except => [:index, :new, :create]
   before_filter :find_project_from_association, :except => [:index, :new, :create]
   before_filter :authorize
+  accept_rss_auth :index, :show
+  accept_api_auth :index, :show
 
   helper :attachments
 
@@ -39,7 +41,10 @@ class DocumentsController < ApplicationController
       @grouped = documents.group_by(&:category)
     end
     @document = @project.documents.build
-    render :layout => false if request.xhr?
+    respond_to do |format|
+      format.html { render :layout => false if request.xhr? }
+      format.api
+    end
   end
 
   def show

@@ -1,0 +1,17 @@
+api.array :documents, api_meta(:total_count => @grouped.collect{ |k,v| v.size }.inject(:+)) do
+  @grouped.each do |group, documents|
+    documents.each do |document|
+      api.document do
+        api.id document.id
+        api.group group
+        api.category(:id => document.category_id, :name => document.category.name) unless document.category.nil?
+        api.title document.title
+        api.project(:id => document.project_id, :name => document.project.name) unless document.project.nil?
+        api.description document.description
+
+        api.created_on document.created_on
+        api.updated_on document.updated_on
+      end
+    end
+  end
+end
