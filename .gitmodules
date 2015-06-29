@@ -41,4 +41,4 @@
 	url = https://github.com/cforce/redmine_embedded_video.git
 [submodule "plugins/redmine_image_clipboard_paste"]
 	path = plugins/redmine_image_clipboard_paste
-	url = git://github.com/credativUK/redmine_image_clipboard_paste.git
+	url = https://github.com/alfajango/redmine_image_clipboard_paste.git
