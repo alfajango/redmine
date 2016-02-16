@@ -4,6 +4,6 @@ production:
   port:     80
 
 development:
-  api_key:  # api key
-  host:     # host
+  api_key:  <%= ENV['AIRBRAKE_API_KEY'] %>
+  host:     <%= ENV['AIRBRAKE_HOST'] %>
   port:     80
