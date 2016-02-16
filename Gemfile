@@ -30,7 +30,7 @@ gem 'rqrcode'
 gem 'json'
 gem 'tinder'
 
-gem 'airbrake'
+gem "airbrake", github: "scouttyg/airbrake"
 
 # Optional gem for LDAP authentication
 group :ldap do
