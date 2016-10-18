@@ -23,7 +23,7 @@ class DocumentsController < ApplicationController
   before_filter :find_project_from_association, :except => [:index, :new, :create]
   before_filter :authorize
   accept_rss_auth :index, :show
-  accept_api_auth :index, :show
+  accept_api_auth :index, :show, :create
 
   helper :attachments
 
@@ -60,12 +60,22 @@ class DocumentsController < ApplicationController
     @document = @project.documents.build
     @document.safe_attributes = params[:document]
     @document.save_attachments(params[:attachments])
-    if @document.save
-      render_attachment_warning_if_needed(@document)
-      flash[:notice] = l(:notice_successful_create)
-      redirect_to project_documents_path(@project)
-    else
-      render :action => 'new'
+    respond_to do |format|
+      if @document.save
+        format.html {
+          render_attachment_warning_if_needed(@document)
+          flash[:notice] = l(:notice_successful_create)
+          redirect_to project_documents_path(@project)
+        }
+        format.api {
+          render json: {
+            id: @document.id
+          }.to_json, status: :created
+        }
+      else
+        format.html { render :action => 'new' }
+        format.api { render_validation_errors(@document) }
+      end
     end
   end
 
