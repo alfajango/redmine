@@ -88,6 +88,7 @@ else
 end
 
 group :development do
+  gem "dotenv-rails"
   gem "rdoc", ">= 2.4.2"
   gem "yard"
 end
