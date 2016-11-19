@@ -88,6 +88,8 @@ end
 
 group :development do
   gem "yard"
+  gem "pry-rails"
+  gem "pry-remote"
 end
 
 group :test do
