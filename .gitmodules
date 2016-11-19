@@ -42,3 +42,6 @@
 [submodule "plugins/redmine_image_clipboard_paste"]
 	path = plugins/redmine_image_clipboard_paste
 	url = https://github.com/alfajango/redmine_image_clipboard_paste.git
+[submodule "plugins/AgileDwarf"]
+	path = plugins/AgileDwarf
+	url = https://github.com/alfajango/AgileDwarf.git
