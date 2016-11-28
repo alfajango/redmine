@@ -18,6 +18,7 @@
 class Version < ActiveRecord::Base
   include Redmine::SafeAttributes
   after_update :update_issues_from_sharing_change
+  before_create :set_start_and_end_dates
   belongs_to :project
   has_many :fixed_issues, :class_name => 'Issue', :foreign_key => 'fixed_version_id', :dependent => :nullify
   acts_as_customizable
@@ -284,6 +285,16 @@ class Version < ActiveRecord::Base
         progress = done / (estimated_average * issues_count)
       end
       progress
+    end
+  end
+
+  def set_start_and_end_dates
+    if ir_start_date.blank? && effective_date.present?
+      self.ir_start_date = effective_date
+    end
+
+    if ir_end_date.blank? && effective_date.present?
+      self.ir_end_date = effective_date + 6
     end
   end
 end
