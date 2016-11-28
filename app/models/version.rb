@@ -114,7 +114,7 @@ class Version < ActiveRecord::Base
   after_update :update_issues_from_sharing_change
   after_save :update_default_project_version
   before_destroy :nullify_projects_default_version
-
+  before_create :set_start_and_end_dates
   belongs_to :project
   has_many :fixed_issues, :class_name => 'Issue', :foreign_key => 'fixed_version_id', :dependent => :nullify, :extend => FixedIssuesExtension
 
@@ -428,5 +428,15 @@ class Version < ActiveRecord::Base
 
   def nullify_projects_default_version
     Project.where(:default_version_id => id).update_all(:default_version_id => nil)
+  end
+
+  def set_start_and_end_dates
+    if ir_start_date.blank? && effective_date.present?
+      self.ir_start_date = effective_date
+    end
+
+    if ir_end_date.blank? && effective_date.present?
+      self.ir_end_date = effective_date + 6
+    end
   end
 end
