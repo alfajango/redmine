@@ -436,7 +436,7 @@ class Version < ActiveRecord::Base
     end
 
     if ir_end_date.blank? && effective_date.present?
-      self.ir_end_date = effective_date + 6
+      self.ir_end_date = effective_date + 13
     end
   end
 end
