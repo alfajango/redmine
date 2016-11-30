@@ -49,7 +49,7 @@ class Issue < ActiveRecord::Base
                      # sort by id so that limited eager loading doesn't break with postgresql
                      :order_column => "#{table_name}.id",
                      :scope => lambda { joins(:project).
-                                        joins("LEFT OUTER JOIN #{Journal.table_name} ON #{Journal.table_name}.journalized_type='Issue'" + 
+                                        joins("LEFT OUTER JOIN #{Journal.table_name} ON #{Journal.table_name}.journalized_type='Issue'" +
                                               " AND #{Journal.table_name}.journalized_id = #{Issue.table_name}.id" +
                                               " AND (#{Journal.table_name}.private_notes = #{connection.quoted_false}" +
                                                     " OR (#{Project.allowed_to_condition(User.current, :view_private_notes)}))") }
@@ -316,7 +316,7 @@ class Issue < ActiveRecord::Base
   # * or if the status was not part of the new tracker statuses
   # * or the status was nil
   def tracker=(tracker)
-    if tracker != self.tracker 
+    if tracker != self.tracker
       if status == default_status
         self.status = nil
       elsif status && tracker && !tracker.issue_status_ids.include?(status.id)
@@ -1685,4 +1685,13 @@ class Issue < ActiveRecord::Base
     @assigned_to_was = nil
     @previous_assigned_to_id = nil
   end
+
+  def internal_due_date
+    @internal_due_date ||= begin
+      custom_field_values.select do |v|
+        v.custom_field.name == "Internal due date"
+      end.first.try(:value).try(:to_date)
+    end
+  end
+  public :internal_due_date
 end
