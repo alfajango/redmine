@@ -80,6 +80,15 @@
 </p>
 
 <p class="buttons">
+  Issue ending based on:
+  <br/>
+  <br/>
+  <%= radio_button_tag "due_date", "due_date", params[:due_date] != "internal_due_date" %>
+  <%= label "due_date", "due_date", "Due Date" %>
+  <%= radio_button_tag 'due_date', "internal_due_date", params[:due_date] == "internal_due_date" %>
+  <%= label "due_date", "internal_due_date", "Internal Due Date" %>
+  <br/>
+  <br/>
   <%= number_field_tag 'months', @gantt.months, :min => 1, :max => Setting.gantt_months_limit.to_i, :autocomplete => false %>
   <%= l(:label_months_from) %>
   <%= select_month(@gantt.month_from, :prefix => "month", :discard_type => true) %>
@@ -132,10 +141,13 @@
 
   # Width of the entire chart
   g_width = ((@gantt.date_to - @gantt.date_from + 1) * zoom).to_i
+  due_date = params[:due_date] == "internal_due_date"
   @gantt.render(:top => headers_height + 8,
                 :zoom => zoom,
                 :g_width => g_width,
-                :subject_width => subject_width)
+                :subject_width => subject_width,
+                :internal_due_date => due_date
+               )
   g_height = [(20 * (@gantt.number_of_rows + 6)) + 150, 206].max
   t_height = g_height + headers_height
 %>

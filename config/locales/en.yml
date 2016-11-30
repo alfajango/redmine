@@ -303,6 +303,7 @@ en:
   field_tracker: Tracker
   field_subject: Subject
   field_due_date: Due date
+  field_internal_due_date: Internal Due date
   field_assigned_to: Assignee
   field_priority: Priority
   field_fixed_version: Target version

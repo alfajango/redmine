@@ -43,9 +43,14 @@ class Issue < ActiveRecord::Base
   acts_as_attachable :after_add => :attachment_added, :after_remove => :attachment_removed
   acts_as_customizable
   acts_as_watchable
-  acts_as_searchable :columns => ['subject', "#{table_name}.description"],
-                     :preload => [:project, :status, :tracker],
-                     :scope => lambda {|options| options[:open_issues] ? self.open : self.all}
+  acts_as_searchable :columns => ['subject', "#{table_name}.description", "#{Journal.table_name}.notes"],
+                     # sort by id so that limited eager loading doesn't break with postgresql
+                     :order_column => "#{table_name}.id",
+                     :scope => lambda { joins(:project).
+                                        joins("LEFT OUTER JOIN #{Journal.table_name} ON #{Journal.table_name}.journalized_type='Issue'" +
+                                              " AND #{Journal.table_name}.journalized_id = #{Issue.table_name}.id" +
+                                              " AND (#{Journal.table_name}.private_notes = #{connection.quoted_false}" +
+                                                    " OR (#{Project.allowed_to_condition(User.current, :view_private_notes)}))") }
 
   acts_as_event :title => Proc.new {|o| "#{o.tracker.name} ##{o.id} (#{o.status}): #{o.subject}"},
                 :url => Proc.new {|o| {:controller => 'issues', :action => 'show', :id => o.id}},
@@ -368,10 +373,8 @@ class Issue < ActiveRecord::Base
   # * or if the status was not part of the new tracker statuses
   # * or the status was nil
   def tracker=(tracker)
-    tracker_was = self.tracker
-    association(:tracker).writer(tracker)
-    if tracker != tracker_was
-      if status == tracker_was.try(:default_status)
+    if tracker != self.tracker
+      if status == default_status
         self.status = nil
       elsif status && tracker && !tracker.issue_status_ids.include?(status.id)
         self.status = nil
@@ -1993,6 +1996,15 @@ class Issue < ActiveRecord::Base
       Mailer.deliver_issue_add(self)
     end
   end
+
+  def internal_due_date
+    @internal_due_date ||= begin
+      custom_field_values.select do |v|
+        v.custom_field.name == "Internal due date"
+      end.first.try(:value).try(:to_date)
+    end
+  end
+  public :internal_due_date
 
   def clear_disabled_fields
     if tracker
