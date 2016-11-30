@@ -314,6 +314,17 @@ module Redmine
       def line_for_issue(issue, options)
         # Skip issues that don't have a due_before (due_date or version's due_date)
         if issue.is_a?(Issue) && issue.due_before
+          due_date = if options[:internal_due_date]
+            issue.internal_due_date or issue.due_before
+          else
+            issue.due_before
+          end
+          coords = coordinates(
+            issue.start_date,
+            due_date,
+            issue.done_ratio,
+            options[:zoom]
+          )
           label = "#{issue.status.name} #{issue.done_ratio}%"
           markers = !issue.leaf?
           line(issue.start_date, issue.due_before, issue.done_ratio, markers, label, options, issue)
