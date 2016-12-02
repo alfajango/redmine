@@ -45,12 +45,13 @@ class Issue < ActiveRecord::Base
   acts_as_watchable
   acts_as_searchable :columns => ['subject', "#{table_name}.description", "#{Journal.table_name}.notes"],
                      # sort by id so that limited eager loading doesn't break with postgresql
-                     :order_column => "#{table_name}.id",
                      :scope => lambda { joins(:project).
                                         joins("LEFT OUTER JOIN #{Journal.table_name} ON #{Journal.table_name}.journalized_type='Issue'" +
                                               " AND #{Journal.table_name}.journalized_id = #{Issue.table_name}.id" +
                                               " AND (#{Journal.table_name}.private_notes = #{connection.quoted_false}" +
-                                                    " OR (#{Project.allowed_to_condition(User.current, :view_private_notes)}))") }
+                                              " OR (#{Project.allowed_to_condition(User.current, :view_private_notes)}))").
+                                        order("#{table_name}.id")
+                                      }
 
   acts_as_event :title => Proc.new {|o| "#{o.tracker.name} ##{o.id} (#{o.status}): #{o.subject}"},
                 :url => Proc.new {|o| {:controller => 'issues', :action => 'show', :id => o.id}},
