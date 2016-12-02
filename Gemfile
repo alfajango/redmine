@@ -89,6 +89,7 @@ end
 group :development do
   gem "dotenv-rails"
   gem "yard"
+  gem "pgreset"
   gem "pry-rails"
   gem "pry-remote"
 end
