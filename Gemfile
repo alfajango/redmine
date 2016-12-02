@@ -102,6 +102,7 @@ else
 end
 
 group :development do
+  gem "dotenv-rails"
   gem "rdoc", "~> 4.3"
   gem "yard"
   gem "pry-rails"
