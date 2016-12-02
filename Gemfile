@@ -105,6 +105,7 @@ group :development do
   gem "dotenv-rails"
   gem "rdoc", "~> 4.3"
   gem "yard"
+  gem "pgreset"
   gem "pry-rails"
   gem "pry-remote"
 end
