@@ -87,6 +87,7 @@ else
 end
 
 group :development do
+  gem "dotenv-rails"
   gem "yard"
   gem "pry-rails"
   gem "pry-remote"
