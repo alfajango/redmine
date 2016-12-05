@@ -33,14 +33,14 @@ pre, code {font-family: Consolas, Menlo, "Liberation Mono", Courier, monospace;}
 #quick-search {float:right;}
 
 #main-menu {position: absolute;  bottom: 0px;  left:6px; margin-right: -500px; width: 100%;}
-#main-menu ul {margin: 0;  padding: 0; width: 100%; white-space: nowrap;}
+#main-menu ul {margin: 0;  padding: 0; width: initial; white-space: nowrap;}
 #main-menu li {
   float:none;
   list-style-type:none;
   margin: 0px 2px 0px 0px;
   padding: 0px 0px 0px 0px;
   white-space:nowrap;
-  display:inline-block;
+  //display:inline-block;
 }
 #main-menu li a {
   display: block;
@@ -64,6 +64,7 @@ pre, code {font-family: Consolas, Menlo, "Liberation Mono", Courier, monospace;}
   border-right: 1px solid #759FCF;
   border-bottom: 1px solid #759FCF;
   border-left: 1px solid #759FCF;
+  margin-left: 6px;
 }
 #main-menu .menu-children li {float:left; clear:both; width:100%;}
 #main-menu .menu-children li a {color: #555; background-color:#fff; font-weight:normal;}
