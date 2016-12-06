@@ -1,5 +1,7 @@
 source 'https://rubygems.org'
 
+ruby "2.0"
+
 if Gem::Version.new(Bundler::VERSION) < Gem::Version.new('1.5.0')
   abort "Redmine requires Bundler 1.5.0 or higher (you're using #{Bundler::VERSION}).\nPlease update with 'gem update bundler'."
 end
@@ -97,8 +99,10 @@ if File.exist?(database_file)
   end
 else
   warn("Please configure your config/database.yml first")
-  gem "pg", ">= 0.11.0", :platforms => [:mri, :mingw]
+  gem "pg", "~> 0.18.1", :platforms => [:mri, :mingw, :x64_mingw]
   gem "activerecord-jdbcpostgresql-adapter", :platforms => :jruby
+  gem "mysql2", "~> 0.3.11", :platforms => [:mri, :mingw, :x64_mingw]
+  gem "activerecord-jdbcmysql-adapter", :platforms => :jruby
 end
 
 group :development do
