@@ -55,7 +55,7 @@ module Redmine
           # Should we search additional associations on this model ?
           searchable_options[:search_custom_fields] = reflect_on_association(:custom_values).present?
           searchable_options[:search_attachments] = reflect_on_association(:attachments).present?
-          searchable_options[:search_journals] = reflect_on_association(:journals).present?
+          #searchable_options[:search_journals] = reflect_on_association(:journals).present?
 
           send :include, Redmine::Acts::Searchable::InstanceMethods
         end
