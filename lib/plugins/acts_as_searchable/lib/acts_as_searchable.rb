@@ -51,7 +51,7 @@ module Redmine
           # Should we search additional associations on this model ?
           searchable_options[:search_custom_fields] = reflect_on_association(:custom_values).present?
           searchable_options[:search_attachments] = reflect_on_association(:attachments).present?
-          searchable_options[:search_journals] = reflect_on_association(:journals).present?
+          #searchable_options[:search_journals] = reflect_on_association(:journals).present?
 
           send :include, Redmine::Acts::Searchable::InstanceMethods
         end
@@ -97,7 +97,7 @@ module Redmine
 
               if !options[:titles_only] && searchable_options[:search_custom_fields]
                 searchable_custom_fields = CustomField.where(:type => "#{self.name}CustomField", :searchable => true).to_a
-  
+
                 if searchable_custom_fields.any?
                   fields_by_visibility = searchable_custom_fields.group_by {|field|
                     field.visibility_by_project_condition(searchable_options[:project_key], user, "#{CustomValue.table_name}.custom_field_id")
@@ -107,7 +107,7 @@ module Redmine
                     clauses << "(#{CustomValue.table_name}.custom_field_id IN (#{fields.map(&:id).join(',')}) AND (#{visibility}))"
                   end
                   visibility = clauses.join(' OR ')
-  
+
                   r |= fetch_ranks_and_ids(
                     search_scope(user, projects, options).
                     joins(:custom_values).
