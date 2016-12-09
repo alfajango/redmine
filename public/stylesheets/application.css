@@ -816,6 +816,7 @@ html>body .tabular p {overflow:hidden;}
 input#twofa_code, img#twofa_code { width: 140px; }
 ul.twofa_backup_codes { list-style-type: none; padding: 0; display: inline-block; columns: 14em 2;}
 ul.twofa_backup_codes code { font-size: 16px; line-height: 2em }
+.tabular textarea.wiki-edit {width: 99%;}
 
 .tabular label{
   font-weight: bold;

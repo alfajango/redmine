@@ -624,6 +624,9 @@ function replaceIssueFormWith(html){
   });
   $('#all_attributes').empty();
   $('#all_attributes').prepend(replacement);
+  $('#all_attributes').find("#issue_description")
+    .parent().css("display", "block")
+    .parent().css("display", "block");
 }
 
 function updateBulkEditFrom(url) {
