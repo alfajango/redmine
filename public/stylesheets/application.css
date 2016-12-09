@@ -591,6 +591,7 @@ html>body .tabular p {overflow:hidden;}
 
 .tabular input, .tabular select {max-width:95%}
 .tabular textarea {width:95%; resize:vertical;}
+.tabular textarea.wiki-edit {width: 99%;}
 
 .tabular label{
   font-weight: bold;
