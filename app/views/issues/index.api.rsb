@@ -19,6 +19,7 @@ api.array :issues, api_meta(:total_count => @issue_count, :offset => @offset, :l
       api.done_ratio  issue.done_ratio
       api.is_private  issue.is_private
       api.estimated_hours issue.estimated_hours
+      api.ir_position issue.ir_position
 
       render_api_custom_values issue.visible_custom_field_values, api
 
