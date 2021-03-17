@@ -31,4 +31,6 @@ Rails.application.configure do
   config.active_support.deprecation = :log
 
   config.force_ssl = true
+
+  config.assets.compile = false
 end
