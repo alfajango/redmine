@@ -7,6 +7,3 @@
 #   config.log_level = :debug
 #   ...
 #
-
-    # For asset precompilation on Heroku deploy
-    config.assets.initialize_on_precompile = false

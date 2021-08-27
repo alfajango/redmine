@@ -1,9 +1,0 @@
-production:
-  api_key:  <%= ENV['AIRBRAKE_API_KEY'] %>
-  host:     <%= ENV['AIRBRAKE_HOST'] %>
-  port:     <%= ENV['AIRBRAKE_PORT'] || 80 %>
-
-development:
-  api_key:  <%= ENV['AIRBRAKE_API_KEY'] %>
-  host:     <%= ENV['AIRBRAKE_HOST'] %>
-  port:     <%= ENV['AIRBRAKE_PORT'] || 80 %>
