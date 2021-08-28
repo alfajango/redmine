@@ -56,8 +56,8 @@ module Redmine
 
     def ll(lang, str, arg=nil)
       options = arg.is_a?(Hash) ? arg : {:value => arg}
-      locale = lang.to_s.gsub(%r{(.+)\-(.+)$}) {"#{$1}-#{$2.upcase}"}
-      ::I18n.t(str.to_s, **options, locale: locale)
+      #locale = lang.to_s.gsub(%r{(.+)\-(.+)$}) {"#{$1}-#{$2.upcase}"}
+      ::I18n.t(str.to_s, **options, locale: lang)
     end
 
     # Localizes the given args with user's language
