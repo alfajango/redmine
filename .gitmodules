@@ -45,3 +45,6 @@
 [submodule "plugins/redmine_dashboard"]
 	path = plugins/redmine_dashboard
 	url = https://github.com/alfajango/redmine_dashboard.git
+[submodule "public/themes/PurpleMine2"]
+	path = public/themes/PurpleMine2
+	url = https://github.com/mrliptontea/PurpleMine2.git
