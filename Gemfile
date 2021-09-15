@@ -82,8 +82,8 @@ if File.exist?(database_file)
   end
 else
   warn("Please configure your config/database.yml first")
-  gem "pg", "~> 0.18.1", :platforms => [:mri, :mingw, :x64_mingw]
-  gem "activerecord-jdbcpostgresql-adapter", :platforms => :jruby
+  gem "pg", "~> 1.2.2", :platforms => [:mri, :mingw, :x64_mingw]
+  #gem "activerecord-jdbcpostgresql-adapter", :platforms => :jruby
   #gem "mysql2", "~> 0.3.11", :platforms => [:mri, :mingw, :x64_mingw]
   #gem "activerecord-jdbcmysql-adapter", :platforms => :jruby
 end
