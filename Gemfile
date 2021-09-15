@@ -31,7 +31,7 @@ gem 'rqrcode'
 
 gem 'json'
 gem 'tinder'
-gem 'thin'
+gem 'puma'
 
 # Optional gem for LDAP authentication
 group :ldap do
