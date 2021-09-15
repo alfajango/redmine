@@ -1,6 +1,6 @@
 source 'https://rubygems.org'
 
-ruby "2.3.8"
+ruby "2.6.8"
 
 if Gem::Version.new(Bundler::VERSION) < Gem::Version.new('1.5.0')
   abort "Redmine requires Bundler 1.5.0 or higher (you're using #{Bundler::VERSION}).\nPlease update with 'gem update bundler'."
@@ -18,7 +18,7 @@ gem "protected_attributes"
 gem "actionpack-action_caching"
 gem "actionpack-xml_parser"
 gem "roadie-rails"
-gem "mimemagic"
+gem "mimemagic", '~> 0.3.2'
 gem "rails_12factor"
 
 # Request at least nokogiri 1.6.7.2 because of security advisories
@@ -82,7 +82,7 @@ if File.exist?(database_file)
       when 'mysql'
         gem "activerecord-jdbcmysql-adapter", :platforms => :jruby
       when /postgresql/
-        gem "pg", "~> 0.18.1", :platforms => [:mri, :mingw, :x64_mingw]
+        gem "pg", "~> 0.20.0", :platforms => [:mri, :mingw, :x64_mingw]
         gem "activerecord-jdbcpostgresql-adapter", :platforms => :jruby
       when /sqlite3/
         gem "sqlite3", :platforms => [:mri, :mingw, :x64_mingw]
@@ -100,7 +100,7 @@ if File.exist?(database_file)
   end
 else
   warn("Please configure your config/database.yml first")
-  gem "pg", "~> 0.18.1", :platforms => [:mri, :mingw, :x64_mingw]
+  gem "pg", "~> 0.20.0", :platforms => [:mri, :mingw, :x64_mingw]
   gem "activerecord-jdbcpostgresql-adapter", :platforms => :jruby
   #gem "mysql2", "~> 0.3.11", :platforms => [:mri, :mingw, :x64_mingw]
   #gem "activerecord-jdbcmysql-adapter", :platforms => :jruby
