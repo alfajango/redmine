@@ -47,4 +47,4 @@
 	url = https://github.com/alfajango/redmine_dashboard.git
 [submodule "public/themes/PurpleMine2"]
 	path = public/themes/PurpleMine2
-	url = https://github.com/mrliptontea/PurpleMine2.git
+	url = https://github.com/alfajango/PurpleMine2.git
