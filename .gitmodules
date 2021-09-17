@@ -17,9 +17,6 @@
 [submodule "plugins/redmine_lightbox"]
   path = plugins/redmine_lightbox
   url = https://github.com/zipme/redmine_lightbox.git
-[submodule "plugins/redmine_schedules"]
-  path = plugins/redmine_schedules
-  url = https://github.com/alfajango/redmine-schedules-plugin.git
 [submodule "plugins/redmine_etherpad"]
   path = plugins/redmine_etherpad
   url = https://github.com/alfajango/redmine_etherpad.git
@@ -27,18 +24,12 @@
 [submodule "plugins/redmine_mentions"]
   path = plugins/redmine_mentions
   url = https://github.com/alfajango/redmine_mentions.git
-[submodule "plugins/scrum2b"]
-  path = plugins/scrum2b
-  url = https://github.com/scrum2b/scrum2b.git
 [submodule "plugins/redmine_embedded_video"]
   path = plugins/redmine_embedded_video
   url = https://github.com/cforce/redmine_embedded_video.git
 [submodule "plugins/redmine_image_clipboard_paste"]
   path = plugins/redmine_image_clipboard_paste
   url = https://github.com/alfajango/redmine_image_clipboard_paste.git
-[submodule "plugins/AgileDwarf"]
-  path = plugins/AgileDwarf
-  url = https://github.com/alfajango/AgileDwarf.git
 [submodule "plugins/stuff_to_do_plugin"]
   path = plugins/stuff_to_do_plugin
   url = https://github.com/alfajango/redmine-stuff-to-do-plugin.git

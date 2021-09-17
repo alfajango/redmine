@@ -1,10 +1,4 @@
 GIT
-  remote: https://github.com/alexdunae/holidays
-  revision: 5492c3ec778c6ffeebdf172d6b6a857893a1ee96
-  specs:
-    holidays (1.0.8)
-
-GIT
   remote: https://github.com/alfajango/cashboard-rb.git
   revision: b527314d49460bd6e8acb92204924d0bda5eccb7
   branch: project-list
@@ -131,8 +125,6 @@ GEM
     i18n (1.8.10)
       concurrent-ruby (~> 1.0)
     inifile (3.0.0)
-    jquery-ui-rails (5.0.3)
-      railties (>= 3.2.16)
     json (1.8.6)
     loofah (2.12.0)
       crass (~> 1.0.2)
@@ -331,11 +323,9 @@ DEPENDENCIES
   dotenv-rails
   ffi
   haml
-  holidays!
   html-pipeline (~> 2.13.2)
   i18n (~> 1.8.2)
   inifile
-  jquery-ui-rails
   json
   mail (~> 2.7.1)
   marcel
