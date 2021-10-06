@@ -32,6 +32,8 @@ gem 'json'
 gem 'tinder'
 gem 'puma'
 
+gem 'acts_as_list'
+
 # Optional gem for LDAP authentication
 group :ldap do
   gem 'net-ldap', '~> 0.17.0'
