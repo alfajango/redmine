@@ -35,6 +35,7 @@ Rails.application.configure do
   # Replacing rails_12factor gem for Heroku
   config.public_file_server.enabled = ENV['RAILS_SERVE_STATIC_FILES'].present?
 
+  # Does this need to be removed? I think this was from the old rails_12factor documentation
   if ENV["RAILS_LOG_TO_STDOUT"].present?
     logger           = ActiveSupport::Logger.new(STDOUT)
     logger.formatter = config.log_formatter
