@@ -39,6 +39,3 @@
 [submodule "public/themes/PurpleMine2"]
 	path = public/themes/PurpleMine2
 	url = https://github.com/alfajango/PurpleMine2.git
-[submodule "plugins/redmine_reformat"]
-	path = plugins/redmine_reformat
-	url = https://github.com/orchitech/redmine_reformat
