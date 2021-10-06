@@ -33,9 +33,6 @@
 [submodule "plugins/stuff_to_do_plugin"]
   path = plugins/stuff_to_do_plugin
   url = https://github.com/alfajango/redmine-stuff-to-do-plugin.git
-[submodule "plugins/redmine_dashboard"]
-	path = plugins/redmine_dashboard
-	url = https://github.com/alfajango/redmine_dashboard.git
 [submodule "public/themes/PurpleMine2"]
 	path = public/themes/PurpleMine2
 	url = https://github.com/alfajango/PurpleMine2.git
