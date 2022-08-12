@@ -3,10 +3,10 @@
   url = https://github.com/alfajango/redmine_s3.git
 [submodule "public/themes/pepper"]
   path = public/themes/pepper
-  url = git://github.com/koppen/redmine-pepper-theme.git
+  url = https://github.com/koppen/redmine-pepper-theme.git
 [submodule "public/themes/pixel-cookers"]
   path = public/themes/pixel-cookers
-  url = git://github.com/alfajango/redmine-theme.git
+  url = https://github.com/alfajango/redmine-theme.git
   branch = alfajango
 [submodule "plugins/redmine_better_gantt_chart"]
   path = plugins/redmine_better_gantt_chart
