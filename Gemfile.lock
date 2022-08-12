@@ -105,6 +105,7 @@ GEM
     i18n (1.8.10)
       concurrent-ruby (~> 1.0)
     json (1.8.6)
+    liquid (2.6.3)
     loofah (2.12.0)
       crass (~> 1.0.2)
       nokogiri (>= 1.5.9)
@@ -184,6 +185,10 @@ GEM
       rbpdf-font (~> 1.19.0)
     rbpdf-font (1.19.1)
     redcarpet (3.5.1)
+    redmine_crm (0.0.57)
+      liquid (< 2.6.4)
+      rails
+      rubyzip
     regexp_parser (2.1.1)
     render_parent (0.0.9)
       rails (>= 2.3.0)
@@ -305,6 +310,7 @@ DEPENDENCIES
   rails-dom-testing
   rbpdf (~> 1.20.0)
   redcarpet (~> 3.5.1)
+  redmine_crm
   render_parent (>= 0.0.4)
   request_store (~> 1.5.0)
   roadie-rails (~> 2.2.0)
