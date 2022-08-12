@@ -23,7 +23,7 @@
   branch = alfajango
 [submodule "plugins/redmine_mentions"]
   path = plugins/redmine_mentions
-  url = https://github.com/alfajango/redmine_mentions.git
+  url = https://github.com/arkhitech/redmine_mentions.git
 [submodule "plugins/redmine_embedded_video"]
   path = plugins/redmine_embedded_video
   url = https://github.com/cforce/redmine_embedded_video.git
