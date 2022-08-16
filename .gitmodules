@@ -36,3 +36,6 @@
 [submodule "public/themes/PurpleMine2"]
 	path = public/themes/PurpleMine2
 	url = https://github.com/alfajango/PurpleMine2.git
+[submodule "plugins/redmine_more_filters"]
+	path = plugins/redmine_more_filters
+	url = https://github.com/alfajango/redmine_more_filters.git
